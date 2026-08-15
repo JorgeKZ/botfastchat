@@ -1,0 +1,2178 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BotFast - Construtor de Fluxo Pro</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; height: 100vh; overflow: hidden; }
+
+        .view { display: none; width: 100%; height: 100vh; }
+        .view.active { display: flex; }
+
+        /* --- TELA 1: DASHBOARD DE CANAIS --- */
+        #dashboard-view { background-color: #f1f5f9; color: #1e293b; flex-direction: row; }
+        .sidebar-dash { width: 260px; background: #0f172a; color: white; display: flex; flex-direction: column; padding: 20px; }
+        .sidebar-dash h2 { color: #38bdf8; margin-bottom: 30px; font-size: 1.5rem; }
+        .sidebar-menu-item { padding: 10px 15px; border-radius: 6px; cursor: pointer; color: #94a3b8; font-weight: 500; margin-bottom: 5px; }
+        .sidebar-menu-item.active { background: #1e293b; color: white; border-left: 4px solid #10b981; }
+        
+        .dash-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .btn-novo-canal { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .btn-novo-canal:hover { background: #059669; }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .channel-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; justify-content: space-between; height: 160px; }
+        .channel-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #cbd5e1; }
+        .channel-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .channel-title { font-weight: bold; font-size: 1.1rem; color: #0f172a; }
+        .channel-type { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+        .channel-badge { background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+
+        /* --- MODAL DE CRIAÇÃO E CONFIGURAÇÃO --- */
+        #modal-overlay, #settings-modal-overlay, #gallery-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 100; justify-content: center; align-items: center; }
+        .modal-box { background: white; color: #1e293b; width: 650px; border-radius: 12px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b; }
+        .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; }
+        .modal-subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: bold; color: #334155; margin-bottom: 8px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; color: #1e293b; background: #fff; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #10b981; }
+
+        .nichos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .nicho-card { border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+        .nicho-card:hover { border-color: #94a3b8; }
+        .nicho-card.selected { border-color: #10b981; background: #f0fdf4; }
+        .nicho-card h4 { font-size: 0.9rem; color: #0f172a; margin-bottom: 4px; }
+        .nicho-card p { font-size: 0.75rem; color: #64748b; }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-cancelar { background: #e2e8f0; color: #334155; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-criar { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-criar:hover { background: #059669; }
+
+        /* --- TELA 2: EDITOR DE FLUXO (CANVAS) --- */
+        #editor-view { background-color: #0f172a; flex-direction: column; }
+        .topbar { height: 60px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10; }
+        .topbar-left { display: flex; align-items: center; gap: 15px; }
+        .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .btn-topbar { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-topbar:hover { background: #059669; }
+
+        .editor-layout { display: flex; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; }
+        
+        #sidebar-blocos { width: 300px; background: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; padding: 15px; overflow-y: auto; z-index: 5; transition: transform 0.3s ease; position: relative; }
+        #sidebar-blocos.collapsed { transform: translateX(-100%); width: 0; padding: 0; border: none; }
+        
+        .sidebar-search { width: 100%; background: #0f172a; border: 1px solid #475569; padding: 8px 10px; color: white; border-radius: 6px; outline: none; font-size: 0.85rem; margin-bottom: 15px; }
+        .sidebar-title-bloco { font-size: 0.75rem; font-weight: bold; color: #94a3b8; margin: 15px 0 10px 0; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        
+        .block-item { background: #334155; border: 1px solid #475569; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; cursor: grab; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: #f8fafc; }
+        .block-item:hover { background: #475569; border-color: #38bdf8; }
+        .block-item-content { display: flex; align-items: center; gap: 10px; }
+
+        .sidebar-toggle-btn { position: absolute; left: 300px; top: 15px; background: #1e293b; border: 1px solid #334155; border-left: none; color: #94a3b8; width: 24px; height: 36px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 6; transition: left 0.3s ease; }
+        #sidebar-blocos.collapsed + .sidebar-toggle-btn { left: 0; }
+        .sidebar-toggle-btn:hover { color: white; background: #334155; }
+
+        #canvas-container { flex: 1; position: relative; background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); background-size: 24px 24px; cursor: grab; overflow: hidden; }
+        #canvas-container:active { cursor: grabbing; }
+        
+        #canvas-content-wrapper { position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; transform-origin: 0 0; }
+        #svg-canvas { position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; pointer-events: none; z-index: 1; }
+
+        .canvas-node { position: absolute; width: 420px; background: white; border: 2px solid #f1f5f9; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); cursor: move; user-select: none; z-index: 2; }
+        .canvas-node.inicio { border-color: #6366f1; }
+        .canvas-node.condicional { border-color: #fed7aa; }
+        .canvas-node.switch { border-color: #fed7aa; }
+        .canvas-node.menu { border-color: #bfdbfe; }
+        .canvas-node.perguntas { border-color: #10b981; }
+        .canvas-node.espera { border-color: #a855f7; }
+        .canvas-node.agente-ia { border-color: #6366f1; }
+        .canvas-node.imagem { border-color: #0284c7; }
+        .canvas-node.video { border-color: #0284c7; }
+        .canvas-node.documento { border-color: #0284c7; }
+        .canvas-node.audio { border-color: #d97706; }
+        .canvas-node.anotacoes { border-color: #fef08a; background: #fef9c3; }
+        .canvas-node.aleatorio-sequencial { border-color: #38bdf8; }
+        .canvas-node.encaminhar-fluxo { border-color: #38bdf8; }
+        .canvas-node.fim { border-color: #fca5a5; }
+        
+        .node-top-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; border-top-left-radius: 10px; border-top-right-radius: 10px; font-size: 0.75rem; }
+        .canvas-node.anotacoes .node-top-bar { background: #fef08a; border-bottom-color: #fde047; }
+        .node-badge-apelido { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer; }
+        .node-badge-id { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; font-family: monospace; }
+        .node-top-icon { background: #0284c7; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.75rem; }
+        .node-top-icon.red { background: #ef4444; }
+
+        .canvas-node-header { padding: 12px 14px 8px 14px; font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; color: #059669; }
+        .canvas-node.inicio .canvas-node-header { color: #6366f1; }
+        .canvas-node.condicional .canvas-node-header { color: #e11d48; }
+        .canvas-node.switch .canvas-node-header { color: #e11d48; }
+        .canvas-node.menu .canvas-node-header { color: #2563eb; }
+        .canvas-node.perguntas .canvas-node-header { color: #059669; }
+        .canvas-node.espera .canvas-node-header { color: white; background: #a855f7; border-top-left-radius: 10px; border-top-right-radius: 10px; padding: 12px 16px; }
+        .canvas-node.agente-ia .canvas-node-header { color: white; background: #6366f1; border-top-left-radius: 10px; border-top-right-radius: 10px; padding: 12px 16px; }
+        .canvas-node.imagem .canvas-node-header { color: #0284c7; }
+        .canvas-node.video .canvas-node-header { color: #0284c7; }
+        .canvas-node.documento .canvas-node-header { color: #0284c7; }
+        .canvas-node.audio .canvas-node-header { color: #d97706; }
+        .canvas-node.anotacoes .canvas-node-header { color: #854d0e; border-bottom: 1px solid #fde047; padding: 10px 14px; margin-bottom: 10px; }
+        .canvas-node.aleatorio-sequencial .canvas-node-header { color: white; background: #0284c7; border-top-left-radius: 10px; border-top-right-radius: 10px; padding: 12px 16px; }
+        .canvas-node.encaminhar-fluxo .canvas-node-header { color: white; background: #0284c7; border-top-left-radius: 10px; border-top-right-radius: 10px; padding: 12px 16px; }
+        .canvas-node.fim .canvas-node-header { color: #ef4444; }
+        
+        .canvas-node-body { padding: 0 14px 14px 14px; font-size: 0.8rem; color: #334155; max-height: 600px; overflow-y: auto; }
+
+        /* Estilos específicos do Bloco de Imagem, Vídeo e Documento */
+        .imagem-upload-box { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; position: relative; margin-bottom: 12px; transition: border-color 0.2s; }
+        .imagem-upload-box:hover { border-color: #0284c7; background: #f0fdf4; }
+        .imagem-upload-box img { max-width: 100%; max-height: 140px; border-radius: 6px; object-fit: contain; margin-top: 8px; }
+        .imagem-upload-box video { max-width: 100%; max-height: 140px; border-radius: 6px; object-fit: contain; margin-top: 8px; }
+        .btn-galeria { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-bottom: 12px; transition: background 0.2s; }
+        .btn-galeria:hover { background: #0369a1; }
+        .btn-legenda-escrever { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; padding: 10px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 12px; transition: all 0.2s; }
+        .btn-legenda-escrever:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .audio-upload-box { background: #fffbeb; border: 2px dashed #f59e0b; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; }
+        .audio-upload-box:hover { border-color: #d97706; background: #fef3c7; }
+
+        /* Galeria Modal Itens */
+        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
+        .gallery-item { border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.2s; background: #f8fafc; text-align: center; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .gallery-item:hover { border-color: #0284c7; }
+        .gallery-item.selected { border-color: #10b981; background: #f0fdf4; }
+        .gallery-item img { width: 100%; height: 90px; object-fit: cover; }
+        .gallery-item span { font-size: 0.75rem; color: #475569; padding: 4px; display: block; }
+
+        /* Estilos do Agente IA e Espera */
+        .ia-card-inner { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 16px; margin: 10px 0; }
+        .ia-info-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #4338ca; font-weight: 500; margin-bottom: 4px; }
+        .ia-footer-row { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; position: relative; font-size: 0.9rem; font-weight: 600; color: #4338ca; }
+        .ia-footer-icon-text { display: flex; align-items: center; gap: 8px; }
+
+        .espera-card-inner { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 16px; margin: 10px 0; }
+        .espera-label { font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 8px; display: block; }
+        .espera-inputs-row { display: flex; gap: 10px; align-items: center; }
+        .espera-input-num { width: 110px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; color: #1e293b; background: white; }
+        .espera-select-wrapper { flex: 1; position: relative; }
+        .espera-select { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; color: #1e293b; background: white; appearance: none; cursor: pointer; }
+        .espera-select-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none; font-size: 0.8rem; }
+        .espera-footer-row { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; position: relative; font-size: 0.9rem; font-weight: 600; color: #6b21a8; }
+
+        /* Estilos de Anotações */
+        .anotacoes-tools { display: flex; align-items: center; gap: 8px; color: #713f12; font-size: 1rem; cursor: pointer; }
+        .anotacoes-textarea { width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 500; color: #451a03; resize: none; outline: none; min-height: 80px; }
+        .anotacoes-textarea::placeholder { color: #a16207; }
+
+        /* Estilos do Menu e Perguntas */
+        .menu-label { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; display: block; }
+        .menu-textarea { width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; font-size: 0.9rem; color: #1e293b; resize: none; margin-bottom: 15px; outline: none; }
+        .menu-textarea:focus { border-color: #3b82f6; background: white; }
+        .menu-var-box { display: flex; align-items: center; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 12px; margin-bottom: 15px; }
+        .menu-var-box span { color: #64748b; font-weight: bold; font-size: 1rem; }
+        .menu-var-input { flex: 1; border: none; background: transparent; padding: 6px 10px; font-size: 0.85rem; color: #334155; outline: none; }
+        .menu-toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 12px; padding: 0 4px; }
+        
+        .menu-option-row { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .menu-drag-handle { color: #cbd5e1; cursor: grab; font-weight: bold; font-size: 1rem; letter-spacing: -2px; }
+        .menu-opt-number { font-size: 0.85rem; color: #64748b; font-weight: 600; min-width: 15px; }
+        .menu-opt-input { flex: 1; border: none; font-size: 0.9rem; font-weight: 500; color: #1e293b; outline: none; }
+        .menu-opt-delete { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        .menu-opt-delete:hover { color: #ef4444; }
+        
+        .btn-add-menu-opt { background: #3b82f6; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; margin: 15px auto; font-weight: bold; font-size: 1.2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .btn-add-menu-opt:hover { background: #2563eb; transform: scale(1.05); }
+
+        .menu-footer-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 500; color: #475569; padding: 12px 10px; position: relative; border-bottom: 1px solid #f1f5f9; }
+        .menu-footer-item:last-child { border-bottom: none; }
+        .menu-footer-icon-text { display: flex; align-items: center; gap: 8px; }
+        .menu-footer-settings { color: #94a3b8; cursor: pointer; font-size: 1rem; transition: color 0.2s; }
+        .menu-footer-settings:hover { color: #3b82f6; }
+
+        .perguntas-card-inner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .btn-add-circle-green { background: #10b981; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 12px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .btn-add-circle-green:hover { background: #059669; transform: scale(1.05); }
+
+        /* Lógica e mensagens */
+        .logic-card-interno { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative; }
+        .logic-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .logic-dots { color: #cbd5e1; cursor: grab; font-weight: bold; font-size: 1rem; letter-spacing: -2px; }
+        .logic-title-input { flex: 1; margin: 0 8px; background: white; border: 1px solid #fed7d7; border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; font-weight: 600; color: #1e293b; outline: none; }
+        .btn-delete-logic-item { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.9rem; font-weight: bold; }
+
+        .logic-select-wrapper { position: relative; margin-bottom: 8px; }
+        .logic-select-row { width: 100%; background: white; border: 1px solid #fed7d7; border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .logic-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 20; max-height: 180px; overflow-y: auto; }
+        .logic-dropdown-item { padding: 8px 12px; font-size: 0.85rem; color: #1e293b; cursor: pointer; }
+        .logic-dropdown-item:hover { background: #f1f5f9; color: #2563eb; }
+
+        .logic-input-field { width: 100%; background: white; border: 1px solid #fed7d7; border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; color: #334155; margin-bottom: 8px; outline: none; }
+        .logic-output-row { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 600; color: #e11d48; position: relative; margin-top: 6px; }
+
+        .btn-add-logic-pill { background: #ff6b6b; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: block; margin: 12px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-add-circle-red { background: #ff6b6b; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 12px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .switch-fallback-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: #475569; font-weight: 500; position: relative; margin-top: 10px; }
+
+        .msg-variacao-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; font-weight: bold; color: #334155; }
+        .msg-switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .msg-switch input { opacity: 0; width: 0; height: 0; }
+        .msg-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 22px; }
+        .msg-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        .msg-switch input:checked + .msg-slider { background-color: #10b981; }
+        .msg-switch input:checked + .msg-slider:before { transform: translateX(18px); }
+
+        .msg-input-field { width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; font-size: 0.85rem; color: #64748b; margin-bottom: 10px; outline: none; }
+        .msg-variations-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .msg-variations-subtitle { font-size: 0.75rem; color: #64748b; margin-bottom: 8px; }
+        .msg-variation-item-row { position: relative; margin-bottom: 6px; display: flex; align-items: center; }
+        .msg-variation-item-row input { width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 30px 8px 10px; font-size: 0.85rem; color: #334155; outline: none; }
+        .btn-remove-variation { position: absolute; right: 10px; background: none; border: none; color: #ef4444; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-add-variation-link { background: none; border: none; color: #10b981; font-weight: bold; font-size: 0.8rem; cursor: pointer; display: block; margin: 6px auto 0 auto; text-align: center; }
+
+        .connector { position: absolute; width: 16px; height: 16px; background: white; border: 3px solid #10b981; border-radius: 50%; cursor: crosshair; z-index: 3; pointer-events: auto; }
+        .connector.purple-border { border-color: #a855f7; }
+        .connector.indigo-border { border-color: #6366f1; }
+        .connector.red-border { border-color: #ef4444; }
+        .connector.cyan-border { border-color: #0284c7; }
+        .connector:hover { background: #059669; border-color: #047857; transform: scale(1.3); }
+        .connector.right { right: -8px; top: 50%; transform: translateY(-50%); }
+        .connector.left { left: -8px; top: 50%; transform: translateY(-50%); }
+
+        .connection-line { stroke: #3b82f6; stroke-width: 3; fill: none; cursor: pointer; pointer-events: stroke; transition: stroke 0.2s; }
+        .connection-line:hover { stroke: #10b981; }
+        .connection-line.selected { stroke: #38bdf8; stroke-width: 5; stroke-dasharray: 8,6; animation: dashAnim 1s linear infinite; }
+
+        @keyframes dashAnim {
+            to { stroke-dashoffset: -28; }
+        }
+
+        .delete-line-btn { cursor: pointer; pointer-events: auto; }
+        .delete-line-btn circle { fill: white; stroke: #ef4444; stroke-width: 2; transition: transform 0.2s; }
+        .delete-line-btn:hover circle { fill: #ffeeef; transform: scale(1.1); }
+
+        .zoom-controls { position: absolute; bottom: 20px; right: 20px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; display: flex; align-items: center; gap: 5px; padding: 6px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .zoom-btn { background: #334155; color: white; border: none; width: 30px; height: 30px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .zoom-btn:hover { background: #475569; }
+        .zoom-text { color: #94a3b8; font-size: 0.8rem; padding: 0 8px; min-width: 50px; text-align: center; }
+
+        /* Simulador */
+        #test-modal { display: none; position: fixed; right: 0; top: 60px; width: 380px; height: calc(100vh - 60px); background: #1e293b; border-left: 1px solid #334155; z-index: 100; flex-direction: column; color: white; }
+        .test-header { padding: 12px 15px; background: #0f172a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .test-header-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-limpar-chat { background: #334155; color: #cbd5e1; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+        .btn-limpar-chat:hover { background: #475569; color: white; }
+
+        #test-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { max-width: 85%; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; line-height: 1.4; word-break: break-word; }
+        .chat-msg.bot { background: #334155; color: #f8fafc; align-self: flex-start; }
+        .chat-msg.user { background: #3b82f6; color: white; align-self: flex-end; }
+        .test-input-area { padding: 15px; background: #0f172a; display: flex; gap: 8px; border-top: 1px solid #334155; }
+        .test-input-area input { flex: 1; background: #1e293b; border: 1px solid #475569; padding: 8px; color: white; border-radius: 4px; outline: none; }
+     /* Estilo do Bloco de Áudio */
+.canvas-node.audio { border-color: #f59e0b; }
+.canvas-node.audio .canvas-node-header { color: #d97706; }
+
+.audio-upload-box { background: #fffbeb; border: 2px dashed #f59e0b; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; margin-bottom: 10px; }
+.audio-upload-box:hover { background: #fef3c7; }
+.btn-gravar { background: #ef4444; color: white; border: none; padding: 8px; border-radius: 6px; width: 100%; margin-bottom: 8px; font-weight: 600; cursor: pointer; }
+.btn-gravar:hover { background: #dc2626; }
+.btn-salvar-audio { background: #10b981; color: white; border: none; padding: 8px; border-radius: 6px; width: 100%; font-weight: 600; cursor: pointer; }
+.btn-salvar-audio:hover { background: #059669; }
+    </style>
+</head>
+<body onclick="fecharTodosDropdowns(event)">
+
+    <div id="dashboard-view" class="view active">
+        <div class="sidebar-dash">
+            <h2>BotFast</h2>
+            <div class="sidebar-menu-item active">💬 Todos os canais</div>
+            <div class="sidebar-menu-item">⚙️ Configurações</div>
+        </div>
+        <div class="dash-content">
+            <div class="dash-header">
+                <div>
+                    <h1>Olá, tudo bem?</h1>
+                    <p style="color: #64748b; font-size: 0.9rem;" id="qtd-canais">Canais na sua conta</p>
+                </div>
+                <button class="btn-novo-canal" onclick="abrirModalCanal()">+ Novo canal</button>
+            </div>
+            <div class="cards-grid" id="lista-canais"></div>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="fecharModalCanal()">✕</button>
+            <div class="modal-title">Conectar um canal</div>
+            <div class="modal-subtitle">Escolha o nome e o modelo inicial do seu bot</div>
+            <div class="form-group">
+                <label>Nome do canal</label>
+                <input type="text" id="inputNomeCanal" placeholder="Ex.: Atendimento Jurídico...">
+            </div>
+            <div class="form-group">
+                <label>Escolha o modelo</label>
+                <div class="nichos-grid">
+                    <div class="nicho-card selected" onclick="selecionarNicho(this, 'branco')">
+                        <h4>📄 Em Branco</h4>
+                        <p>Comece um fluxo novo do zero</p>
+                    </div>
+                    <div class="nicho-card" onclick="selecionarNicho(this, 'juridico')">
+                        <h4>⚖️ Advocacia & Jurídico</h4>
+                        <p>Triagem inicial e agendamentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancelar" onclick="fecharModalCanal()">Cancelar</button>
+                <button class="btn-criar" onclick="criarCanalEAvancar()">Criar canal e fluxo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÃO DAS ENGRENAGENS E AGENTE IA / LEGENDA -->
+    <div id="settings-modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="fecharModalConfiguracao()">✕</button>
+            <div class="modal-title" id="settings-modal-title">Configurar Regra</div>
+            <div class="modal-subtitle" id="settings-modal-subtitle">Ajuste os parâmetros e mensagens</div>
+            
+            <div id="settings-content-body">
+                <!-- Conteúdo injetado via JS -->
+            </div>
+
+            <div class="modal-footer" id="settings-modal-footer">
+                <button class="btn-cancelar" onclick="fecharModalConfiguracao()">Cancelar</button>
+                <button class="btn-criar" onclick="salvarConfiguracaoEngrenagem()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE GALERIA DO BOT -->
+    <div id="gallery-modal-overlay">
+        <div class="modal-box" style="width: 550px;">
+            <button class="modal-close" onclick="fecharGaleriaBot()">✕</button>
+            <div class="modal-title" id="gallery-modal-title">Galeria do Bot</div>
+            <div class="modal-subtitle" id="gallery-modal-subtitle">Escolha um item da galeria pré-carregada</div>
+            
+            <div class="gallery-grid" id="gallery-grid-items">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancelar" onclick="fecharGaleriaBot()">Cancelar</button>
+                <button class="btn-criar" onclick="confirmarEscolhaGaleria()">Selecionar Item</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editor-view" class="view">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button onclick="voltarParaDashboard()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-weight:600;">← Voltar</button>
+                <h3 id="titulo-canal-ativo" style="color: #38bdf8;">Atendimento</h3>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-topbar" onclick="toggleTestador()">💬 Testar Fluxo</button>
+                <button class="btn-topbar" style="background: #3b82f6;" onclick="salvarFluxoNoServidor()">Salvar Alterações</button>
+            </div>
+        </div>
+
+        <div class="editor-layout" style="position: relative;">
+            <div id="sidebar-blocos">
+    <input type="text" id="sidebarSearchInput" class="sidebar-search" placeholder="🔍 Buscar bloco...">
+    
+    <div class="sidebar-title-bloco">Básicos</div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Mensagem')" data-nome="mensagem">
+        <div class="block-item-content">💬 Mensagem</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Menu')" data-nome="menu">
+        <div class="block-item-content">= Menu</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Perguntas (Input)')" data-nome="perguntas (input)">
+        <div class="block-item-content">❓ Perguntas (Input)</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Imagem')" data-nome="imagem">
+        <div class="block-item-content">🖼️ Imagem</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Vídeo')" data-nome="vídeo">
+        <div class="block-item-content">🎬 Vídeo</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Documento')" data-nome="documento">
+        <div class="block-item-content">📄 Documento</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Áudio')" data-nome="áudio">
+        <div class="block-item-content">🎙️ Áudio</div>
+    </div>
+
+    <div class="sidebar-title-bloco">Lógica & Ações</div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Anotações')" data-nome="anotações">
+        <div class="block-item-content">📝 Anotações</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Condicional (IF)')" data-nome="condicional (if)">
+        <div class="block-item-content">⚙️ Condicional (IF)</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Switch (Múltiplas Condições)')" data-nome="switch (múltiplas condições)">
+        <div class="block-item-content">🔀 Switch (Múltiplas Condições)</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Tempo de Espera')" data-nome="tempo de espera">
+        <div class="block-item-content">⏱️ Tempo de Espera</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Agente IA')" data-nome="agente ia">
+        <div class="block-item-content">🤖 Agente IA</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Aleatório / Sequencial')" data-nome="aleatório / sequencial">
+        <div class="block-item-content">🔀 Aleatório / Sequencial</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Encaminhar Fluxo')" data-nome="encaminhar fluxo">
+        <div class="block-item-content">↗️ Encaminhar Fluxo</div>
+    </div>
+    <div class="block-item" draggable="true" ondragstart="lancarArrasto(event, 'Fim')" data-nome="fim">
+        <div class="block-item-content"><span style="color:red; margin-right:8px;">●</span>Fim</div>
+    </div>
+</div>
+
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Ocultar/Exibir Barra Lateral">❮</button>
+
+            <div id="canvas-container" onmousedown="iniciarPan(event)">
+                <div id="canvas-content-wrapper">
+                    <svg id="svg-canvas"></svg>
+                </div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="mudarZoom(-0.1)">-</button>
+                    <span class="zoom-text" id="zoom-label">100%</span>
+                    <button class="zoom-btn" onclick="mudarZoom(0.1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="test-modal">
+        <div class="test-header">
+            <h4>Simulador de Atendimento</h4>
+            <div class="test-header-actions">
+                <button class="btn-limpar-chat" onclick="limparChatTeste()">🧹 Limpar</button>
+                <button onclick="toggleTestador()" style="background:none; border:none; color:white; cursor:pointer; font-size:1rem;">✕</button>
+            </div>
+        </div>
+        <div id="test-messages"></div>
+        <div class="test-input-area">
+            <input type="text" id="testInput" placeholder="Digite..." onkeypress="if(event.key==='Enter') enviarTeste()">
+            <button class="btn-topbar" onclick="enviarTeste()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        let canais = [
+            { id: 1, nome: "Atendimento Jurídico", tipo: "WhatsApp", status: "Ativo" }
+        ];
+
+        let nichoSelecionado = 'branco';
+        let blocosCanvas = [
+            { id: "inicio_1", type: "Início", title: "Início", content: "Ponto de partida do fluxo do bot", x: 80, y: 100, isInicio: true },
+            { 
+                id: "msg_1", 
+                type: "Mensagem", 
+                title: "Enviar Mensagem", 
+                content: "Digite sua mensagem...", 
+                variationsEnabled: false,
+                variations: ["Variação 1"],
+                x: 480, 
+                y: 80, 
+                isInicio: false 
+            }
+        ];
+        let conexoes = [
+            { from: "inicio_1", fromOption: null, fromExtra: null, to: "msg_1" }
+        ];
+        let tipoArrastado = '';
+        let conexaoSelecionadaId = null;
+
+        let engrenagemEditando = { blocoId: null, tipo: null };
+
+        let galeriaImagensBot = [
+            { id: 1, nome: "Banner Boas-Vindas", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300" },
+            { id: 2, nome: "Equipe Suporte", url: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=300" },
+            { id: 3, nome: "Atendimento Chat", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" }
+        ];
+
+        let galeriaVideosBot = [
+            { id: 1, nome: "Vídeo Apresentação", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+            { id: 2, nome: "Tutorial do Sistema", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+            { id: 3, nome: "Demonstração Bot", url: "https://www.w3schools.com/html/mov_bbb.mp4" }
+        ];
+
+        let galeriaDocumentosBot = [
+            { id: 1, nome: "Contrato Social.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
+            { id: 2, nome: "Apresentacao_Comercial.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
+            { id: 3, nome: "Tabela_Precos.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" }
+        ];
+
+        let blocoGaleriaAtivoId = null;
+        let galeriaUrlSelecionada = null;
+        let tipoGaleriaAtivo = 'imagem';
+
+        const listaOperadores = [
+            "Igual a", "Diferente de", "Contém", "Não contém", "Maior que", "Menor que",
+            "Maior ou igual a", "Menor ou igual a", "Está vazio", "Não está vazio",
+            "É um número", "Não é um número"
+        ];
+
+        let panX = 0, panY = 0;
+        let zoom = 1.0;
+        let isPanning = false;
+        let startX = 0, startY = 0;
+        let criandoConexaoDe = null;
+
+        // --- FUNÇÕES DA INTERFACE ---
+        
+        function abrirBuscaFluxo(blocoId) {
+            const fluxoSelecionado = prompt("🔍 Buscar Fluxo de Destino:\nDigite o nome ou ID do fluxo para encaminhar:");
+            if (fluxoSelecionado !== null && fluxoSelecionado.trim() !== "") {
+                atualizarConteudo(blocoId, fluxoSelecionado);
+                renderizarCanvas();
+            }
+        }
+
+        function renderizarCanais() {
+            const grid = document.getElementById('lista-canais');
+            if (!grid) return;
+            let html = `
+                <div class="channel-card" style="border: 2px dashed #cbd5e1; background: #f8fafc; align-items: center; justify-content: center;" onclick="abrirModalCanal()">
+                    <div style="text-align: center; color: #10b981; font-weight: bold;">
+                        <span style="font-size: 1.5rem;">+</span><br>Conectar outro canal
+                    </div>
+                </div>
+            `;
+            canais.forEach(c => {
+                html += `
+                    <div class="channel-card" onclick="abrirEditorCanal('${c.nome}')">
+                        <div class="channel-card-top">
+                            <div>
+                                <div class="channel-title">${c.nome}</div>
+                                <div class="channel-type">💬 ${c.tipo}</div>
+                            </div>
+                            <span class="channel-badge">${c.status}</span>
+                        </div>
+                        <div style="text-align: right; font-size: 0.85rem; color: #10b981; font-weight: 600;">Abrir →</div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+            const contador = document.getElementById('qtd-canais');
+            if (contador) contador.innerText = `${canais.length} canais na sua conta`;
+        }
+
+        function abrirModalCanal() { document.getElementById('modal-overlay').style.display = 'flex'; }
+        function fecharModalCanal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        
+        function selecionarNicho(el, nicho) {
+            document.querySelectorAll('.nicho-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            nichoSelecionado = nicho;
+        }
+
+        function criarCanalEAvancar() {
+            const input = document.getElementById('inputNomeCanal');
+            const nome = input && input.value.trim() ? input.value.trim() : "Novo Canal";
+            canais.push({ id: canais.length + 1, nome, tipo: "WhatsApp", status: "Ativo" });
+            fecharModalCanal();
+            renderizarCanais();
+            abrirEditorCanal(nome);
+        }
+
+        function abrirEditorCanal(nomeCanal) {
+            document.getElementById('dashboard-view').classList.remove('active');
+            document.getElementById('editor-view').classList.add('active');
+            document.getElementById('titulo-canal-ativo').innerText = nomeCanal;
+            renderizarCanvas();
+        }
+
+        function voltarParaDashboard() {
+            document.getElementById('editor-view').classList.remove('active');
+            document.getElementById('dashboard-view').classList.add('active');
+            renderizarCanais();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar-blocos');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn');
+            sidebar.classList.toggle('collapsed');
+            toggleBtn.innerText = sidebar.classList.contains('collapsed') ? '❯' : '❮';
+        }
+
+        function filtrarBlocosLaterais(termo) {
+            const filtro = termo.toLowerCase().trim();
+            const itens = document.querySelectorAll('#sidebar-blocos .block-item');
+            itens.forEach(item => {
+                const nome = item.getAttribute('data-nome') || '';
+                if (nome.includes(filtro)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function lancarArrasto(e, tipo) { tipoArrastado = tipo; }
+
+        const container = document.getElementById('canvas-container');
+        if(container) {
+            container.addEventListener('dragover', e => e.preventDefault());
+            container.addEventListener('drop', e => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const x = (e.clientX - rect.left - panX) / zoom;
+                const y = (e.clientY - rect.top - panY) / zoom;
+
+                let defaultContent = 'Digite sua mensagem...';
+                let perguntaTxt = 'Qual a sua pergunta?';
+                let varName = 'resposta';
+                let salvarCont = true;
+
+                if(tipoArrastado === 'Perguntas') {
+                    perguntaTxt = 'Qual o seu nome?';
+                    varName = 'nome';
+                } else if(tipoArrastado === 'Anotações') {
+                    defaultContent = 'Clique para adicionar anotações...';
+                } else if(tipoArrastado === 'Encaminhar Fluxo') {
+                    defaultContent = 'Selecione o fluxo de destino...';
+                } else if(tipoArrastado === 'Fim') {
+                    defaultContent = 'Finaliza o atendimento neste ponto.';
+                } else if(tipoArrastado === 'Imagem' || tipoArrastado === 'Vídeo' || tipoArrastado === 'Documento' || tipoArrastado === 'Áudio') {
+                    defaultContent = '';
+                }
+
+                let novasConditions = (tipoArrastado === 'Switch (Múltiplas Condições)' || tipoArrastado === 'Condicional (IF)') ? [
+                    { id: "cond_" + Math.random().toString(36).substring(7), title: "Condição 1", operator: "Igual a", compareValue: "Valor para comparação", valuesForComp: "Valores para comparação" }
+                ] : [];
+
+                let menuOpcoes = [];
+                if (tipoArrastado === 'Menu') {
+                    menuOpcoes = [
+                        { id: "opt_" + Math.random().toString(36).substring(7), text: "Opção 1" },
+                        { id: "opt_" + Math.random().toString(36).substring(7), text: "Opção 2" }
+                    ];
+                }
+
+                let perguntasLista = [];
+                if (tipoArrastado === 'Perguntas') {
+                    perguntasLista = [
+                        { id: "p_" + Math.random().toString(36).substring(7), texto: perguntaTxt, variavel: varName }
+                    ];
+                }
+
+                let aleatorioOpcoes = [];
+                if (tipoArrastado === 'Aleatório / Sequencial') {
+                    aleatorioOpcoes = [
+                        { id: "alt_" + Math.random().toString(36).substring(7), text: "Saída 1" },
+                        { id: "alt_" + Math.random().toString(36).substring(7), text: "Saída 2" }
+                    ];
+                }
+
+                blocosCanvas.push({
+                    id: "node_" + Math.random().toString(36).substring(7),
+                    type: tipoArrastado,
+                    title: tipoArrastado === 'Fim' ? 'Finalizar Atendimento' : (tipoArrastado === 'Documento' ? 'Enviar Documento' : (tipoArrastado === 'Imagem' ? 'Enviar Imagem' : (tipoArrastado === 'Áudio' ? 'Enviar Áudio' : (tipoArrastado === 'Vídeo' ? 'Enviar Vídeo' : tipoArrastado)))),
+                    content: defaultContent,
+                    imagemUrl: '',
+                    videoUrl: '',
+                    documentoUrl: '',
+                    legenda: '',
+                    bloquearCliente: false,
+                    variationsEnabled: false,
+                    variations: ["Variação 1"],
+                    salvarContato: salvarCont,
+                    perguntasLista: perguntasLista,
+                    palavrasSair: 'Ex: sair, cancelar, parar',
+                    logicType: 'AND',
+                    conditions: novasConditions,
+                    enunciadoMenu: 'Qual a pergunta do menu?',
+                    variavelMenu: 'opcao_selecionada',
+                    mostrarNumeros: true,
+                    opcoesMenu: menuOpcoes,
+                    aleatorioOpcoes: aleatorioOpcoes,
+                    modoAleatorio: 'aleatorio',
+                    tempoEsperaValor: 10,
+                    tempoEsperaUnidade: 'Segundos',
+                    configAgente: { provider: 'OpenAI (GPT-4o)', nomeAgente: 'Atendente Virtual', tipoAgente: 'Assistente Geral', descricao: 'Agente inteligente para suporte e atendimento inicial.' },
+                    configNenhuma: { tentativas: 3, mensagem: 'Opção inválida. Tente novamente.' },
+                    configTimeout: { minutos: 5, mensagem: 'Tempo esgotado por inatividade.' },
+                    x: x, y: y, isInicio: false
+                });
+                renderizarCanvas();
+            });
+
+            container.addEventListener('wheel', e => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+                let novoZoom = Math.max(0.4, Math.min(2.0, zoom * zoomFactor));
+
+                panX = mouseX - (mouseX - panX) * (novoZoom / zoom);
+                panY = mouseY - (mouseY - panY) * (novoZoom / zoom);
+                zoom = novoZoom;
+
+                document.getElementById('zoom-label').innerText = Math.round(zoom * 100) + '%';
+                atualizarTransformacaoCanvas();
+            }, { passive: false });
+        }
+
+        function mudarZoom(delta) {
+            const containerRect = container.getBoundingClientRect();
+            const mouseX = containerRect.width / 2;
+            const mouseY = containerRect.height / 2;
+
+            let novoZoom = Math.max(0.4, Math.min(2.0, zoom + delta));
+            panX = mouseX - (mouseX - panX) * (novoZoom / zoom);
+            panY = mouseY - (mouseY - panY) * (novoZoom / zoom);
+            zoom = novoZoom;
+
+            document.getElementById('zoom-label').innerText = Math.round(zoom * 100) + '%';
+            atualizarTransformacaoCanvas();
+        }
+
+        function iniciarPan(e) {
+            if(e.target.id !== 'canvas-container' && e.target.id !== 'svg-canvas' && !e.target.id.includes('canvas-content-wrapper')) return;
+            conexaoSelecionadaId = null;
+            renderizarCanvas();
+
+            isPanning = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+
+            document.onmousemove = (ev) => {
+                if(!isPanning) return;
+                panX = ev.clientX - startX;
+                panY = ev.clientY - startY;
+                atualizarTransformacaoCanvas();
+            };
+
+            document.onmouseup = () => {
+                isPanning = false;
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        }
+
+        function atualizarTransformacaoCanvas() {
+            const wrapper = document.getElementById('canvas-content-wrapper');
+            if(wrapper) wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+        }
+
+        function getConnectorPos(nodeId, type, optionId = null, extraId = null) {
+            let selector = `.connector[data-node-id="${nodeId}"][data-type="${type}"]`;
+            if (optionId) selector += `[data-option-id="${optionId}"]`;
+            if (extraId) selector += `[data-extra-id="${extraId}"]`;
+            
+            let el = document.querySelector(selector);
+            
+            if (!el) {
+                let bloco = blocosCanvas.find(b => b.id === nodeId);
+                if(bloco) {
+                    let x = bloco.x + (type === 'out' ? 424 : -8);
+                    let y = bloco.y + 45;
+                    return {x, y};
+                }
+                return null;
+            }
+            
+            const wrapper = document.getElementById('canvas-content-wrapper');
+            const elRect = el.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
+            let x = (elRect.left - wrapperRect.left + elRect.width / 2) / zoom;
+            let y = (elRect.top - wrapperRect.top + elRect.height / 2) / zoom;
+            
+            return { x, y };
+        }
+
+        function renderizarCanvas(coordsTempFio = null) {
+            const wrapper = document.getElementById('canvas-content-wrapper');
+            const svg = document.getElementById('svg-canvas');
+            if (!wrapper || !svg) return;
+            
+            wrapper.querySelectorAll('.canvas-node').forEach(el => el.remove());
+            svg.innerHTML = '';
+
+            blocosCanvas.forEach((bloco) => {
+                let div = document.createElement('div');
+                let classeTipo = bloco.isInicio ? 'inicio' : (bloco.type === 'Condicional (IF)' ? 'condicional' : (bloco.type === 'Switch (Múltiplas Condições)' ? 'switch' : (bloco.type === 'Menu' ? 'menu' : (bloco.type === 'Perguntas' ? 'perguntas' : (bloco.type === 'Tempo de Espera' ? 'espera' : (bloco.type === 'Agente IA' ? 'agente-ia' : (bloco.type === 'Imagem' ? 'imagem' : (bloco.type === 'Vídeo' ? 'video' : ((bloco.type === 'Documento' ? 'documento' : (bloco.type === 'Áudio' ? 'audio' : (bloco.type === 'Anotações' ? 'anotacoes' : (bloco.type === 'Aleatório / Sequencial' ? 'aleatorio-sequencial' : (bloco.type === 'Encaminhar Fluxo' ? 'encaminhar-fluxo' : (bloco.type === 'Fim' ? 'fim' : 'comum')))))))))))))));
+                div.className = `canvas-node ${classeTipo}`;
+                div.style.left = bloco.x + 'px';
+                div.style.top = bloco.y + 'px';
+
+                let deleteBtn = !bloco.isInicio ? `<button class="node-top-icon red" onclick="removerBloco('${bloco.id}')" title="Excluir bloco">🗑️</button>` : '';
+                
+                let topBarHtml = '';
+                if (bloco.type === 'Anotações') {
+                    topBarHtml = `
+                        <div class="canvas-node-header">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 1rem;">✏️</span> <span>Anotações</span>
+                            </div>
+                            <div class="anotacoes-tools">
+                                <span title="Mudar cor">🎨</span>
+                                <span title="Formatar texto">🔤</span>
+                                <span title="Expandir">⛶</span>
+                                <span title="Duplicar">❏</span>
+                                <span onclick="removerBloco('${bloco.id}')" title="Excluir">🗑️</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Tempo de Espera') {
+                    topBarHtml = `
+                        <div class="node-top-bar" style="background: #a855f7; border-bottom: none; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                            <button class="node-badge-apelido" style="background: rgba(255,255,255,0.2); color: white;">Sem apelido ✏️</button>
+                            <div class="node-badge-id" style="background: rgba(255,255,255,0.1); color: white;">ID: ${bloco.id.substring(5, 12)} 📋</div>
+                            <div style="flex:1;"></div>
+                            <button class="node-top-icon" style="background: rgba(255,255,255,0.2);" title="Duplicar">❏</button>
+                            ${!bloco.isInicio ? `<button class="node-top-icon red" style="background: #ef4444;" onclick="removerBloco('${bloco.id}')" title="Excluir bloco">🗑️</button>` : ''}
+                            <button class="node-top-icon" style="background: rgba(255,255,255,0.2);" title="Minimizar">(-)</button>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Agente IA' || bloco.type === 'Imagem' || bloco.type === 'Vídeo' || bloco.type === 'Documento') {
+                    let corBg = bloco.type === 'Agente IA' ? '#6366f1' : '#0284c7';
+                    topBarHtml = `
+                        <div class="node-top-bar" style="background: ${corBg}; border-bottom: none; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                            <button class="node-badge-apelido" style="background: rgba(255,255,255,0.2); color: white;">Sem apelido ✏️</button>
+                            <div class="node-badge-id" style="background: rgba(255,255,255,0.1); color: white;">ID: ${bloco.id.substring(5, 12)} 📋</div>
+                            <div style="flex:1;"></div>
+                            <button class="node-top-icon" style="background: rgba(255,255,255,0.2);" title="Duplicar">❏</button>
+                            ${!bloco.isInicio ? `<button class="node-top-icon red" style="background: #ef4444;" onclick="removerBloco('${bloco.id}')" title="Excluir bloco">🗑️</button>` : ''}
+                            <button class="node-top-icon" style="background: rgba(255,255,255,0.2);" title="Minimizar">(-)</button>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Aleatório / Sequencial' || bloco.type === 'Encaminhar Fluxo') {
+                    topBarHtml = `
+                        <div class="node-top-bar" style="background: #0284c7; border-bottom: none; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                            <button class="node-badge-apelido" style="background: rgba(255,255,255,0.2); color: white;">Sem apelido ✏️</button>
+                            <div class="node-badge-id" style="background: rgba(255,255,255,0.1); color: white;">ID: ${bloco.id.substring(5, 12)} 📋</div>
+                            <div style="flex:1;"></div>
+                            <button class="node-top-icon" style="background: rgba(255,255,255,0.2);" title="Duplicar">❏</button>
+                            ${!bloco.isInicio ? `<button class="node-top-icon red" style="background: #ef4444;" onclick="removerBloco('${bloco.id}')" title="Excluir bloco">🗑️</button>` : ''}
+                            <button class="node-top-icon" style="background: rgba(255,255,255,0.2);" title="Minimizar">(-)</button>
+                        </div>
+                    `;
+                } else {
+                    topBarHtml = `
+                        <div class="node-top-bar">
+                            <button class="node-badge-apelido">Sem apelido ✏️</button>
+                            <div class="node-badge-id">ID: ${bloco.id.substring(5, 12)} 📋</div>
+                            <div style="flex:1;"></div>
+                            <button class="node-top-icon" title="Centralizar">⛶</button>
+                            <button class="node-top-icon" title="Duplicar">❏</button>
+                            ${deleteBtn}
+                            <button class="node-top-icon" title="Minimizar">(-)</button>
+                        </div>
+                    `;
+                }
+
+                let bodyContent = '';
+                if (bloco.isInicio) {
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color:#6366f1;"><span>🚀 Início</span></div>
+                        <div class="canvas-node-body"><div style="font-size: 0.8rem; color: #475569;">${bloco.content}</div></div>
+                    `;
+                } else if (bloco.type === 'Fim') {
+                    let isCheckedBlock = bloco.bloquearCliente ? 'checked' : '';
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #ef4444; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🔴</span> Finalizar Atendimento</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div style="background: #fef2f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #991b1b; margin-top: 6px;">
+                                ${bloco.content || 'Finaliza o fluxo de atendimento neste ponto.'}
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <span style="font-size: 0.85rem; font-weight: 500; color: #334155;">Bloquear cliente para novos atendimentos</span>
+                                <label class="msg-switch">
+                                    <input type="checkbox" ${isCheckedBlock} onchange="toggleBloquearCliente('${bloco.id}', this.checked)">
+                                    <span class="msg-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Anotações') {
+                    bodyContent = `
+                        <div class="canvas-node-body" style="padding-top: 0;">
+                            <textarea class="anotacoes-textarea" placeholder="Clique para adicionar anotações..." onchange="atualizarConteudo('${bloco.id}', this.value)">${bloco.content === 'Digite sua mensagem...' ? 'Clique para adicionar anotações...' : (bloco.content || '')}</textarea>
+                            <div style="text-align: right; font-size: 0.75rem; color: #a16207; margin-top: 5px;">300x200</div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Tempo de Espera') {
+                    let valorEspera = bloco.tempoEsperaValor !== undefined ? bloco.tempoEsperaValor : 10;
+                    let unidadeEspera = bloco.tempoEsperaUnidade || 'Segundos';
+                    
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #a855f7; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">⏱️</span> Tempo de Espera</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div class="espera-card-inner">
+                                <label class="espera-label">Defina o tempo de espera</label>
+                                <div class="espera-inputs-row">
+                                    <input type="number" class="espera-input-num" value="${valorEspera}" min="1" onchange="atualizarTempoValor('${bloco.id}', this.value)">
+                                    <div class="espera-select-wrapper">
+                                        <select class="espera-select" onchange="atualizarTempoUnidade('${bloco.id}', this.value)">
+                                            <option value="Segundos" ${unidadeEspera === 'Segundos' ? 'selected' : ''}>Segundos</option>
+                                            <option value="Minutos" ${unidadeEspera === 'Minutos' ? 'selected' : ''}>Minutos</option>
+                                            <option value="Horas" ${unidadeEspera === 'Horas' ? 'selected' : ''}>Horas</option>
+                                            <option value="Dias" ${unidadeEspera === 'Dias' ? 'selected' : ''}>Dias</option>
+                                        </select>
+                                        <span class="espera-select-arrow">▼</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="espera-footer-row">
+                                <div class="espera-footer-icon-text">
+                                    <span style="font-size:1.1rem;">➦</span> <span>Próximo bloco</span>
+                                </div>
+                                <div class="connector right purple-border" data-node-id="${bloco.id}" data-type="out" title="Ligar Próximo bloco" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Agente IA') {
+                    let confIA = bloco.configAgente || { provider: 'OpenAI (GPT-4o)', nomeAgente: 'Atendente Virtual', tipoAgente: 'Assistente Geral', descricao: 'Agente inteligente.' };
+                    
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #6366f1; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🤖</span> Agente IA</span>
+                            <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'agente_ia')" title="Configurar Agente IA">⚙️</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div class="ia-card-inner">
+                                <div class="ia-info-row"><span>Provider:</span> <strong>${confIA.provider}</strong></div>
+                                <div class="ia-info-row"><span>Nome:</span> <strong>${confIA.nomeAgente}</strong></div>
+                                <div class="ia-info-row"><span>Tipo:</span> <strong>${confIA.tipoAgente}</strong></div>
+                            </div>
+                            
+                            <div class="ia-footer-row">
+                                <div class="ia-footer-icon-text">
+                                    <span style="font-size:1.1rem;">➦</span> <span>Próximo bloco / Saída IA</span>
+                                </div>
+                                <div class="connector right indigo-border" data-node-id="${bloco.id}" data-type="out" title="Ligar Próximo bloco" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Imagem') {
+                    let imgPreviewHtml = bloco.imagemUrl ? `<img src="${bloco.imagemUrl}" alt="Imagem do Bot">` : `<span style="font-size: 2rem;">🖼️</span><div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">Arraste uma imagem ou clique para selecionar</div>`;
+                    let legendaResumo = bloco.legenda ? `Legenda: ${bloco.legenda.substring(0, 24)}...` : 'Nenhuma legenda definida';
+
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #0284c7; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🖼️</span> Enviar Imagem</span>
+                            <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'legenda_imagem')" title="Configurar Legenda">⚙️</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div class="imagem-upload-box" onclick="document.getElementById('file_input_${bloco.id}').click()" ondragover="event.preventDefault()" ondrop="soltarArquivoImagem(event, '${bloco.id}')">
+                                <input type="file" id="file_input_${bloco.id}" accept="image/*" style="display:none" onchange="carregarImagemLocal(event, '${bloco.id}')">
+                                ${imgPreviewHtml}
+                            </div>
+
+                            <button class="btn-galeria" onclick="abrirGaleriaBot('${bloco.id}', 'imagem')">
+                                📁 Escolher na Galeria
+                            </button>
+
+                            <button class="btn-legenda-escrever" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'legenda_imagem')">
+                                <span style="display: flex; align-items: center; gap: 8px;">✏️ <span>Legenda - ${bloco.legenda ? 'Editar' : 'Escrever'}</span></span>
+                                <span style="font-size: 0.75rem; color: #64748b; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${legendaResumo}</span>
+                            </button>
+
+                            <div class="ia-footer-row" style="background: #e0f2fe; border-color: #bae6fd; color: #0369a1; margin-top: 12px;">
+                                <div class="ia-footer-icon-text">
+                                    <span style="font-size:1.1rem;">➦</span> <span>Próximo bloco</span>
+                                </div>
+                                <div class="connector right cyan-border" data-node-id="${bloco.id}" data-type="out" title="Ligar Próximo bloco" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Vídeo') {
+                    let videoPreviewHtml = bloco.videoUrl ? `<video src="${bloco.videoUrl}" controls style="max-width: 100%; max-height: 140px; border-radius: 6px; margin-top: 8px;"></video>` : `<span style="font-size: 2rem;">🎬</span><div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">Arraste um vídeo ou clique para selecionar</div>`;
+                    let legendaResumo = bloco.legenda ? `Legenda: ${bloco.legenda.substring(0, 24)}...` : 'Nenhuma legenda definida';
+
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #0284c7; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🎬</span> Enviar Vídeo</span>
+                            <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'legenda_video')" title="Configurar Legenda">⚙️</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 8px; background: #f1f5f9; padding: 6px 8px; border-radius: 6px;">Limitações : Formatos: .mp4, 3gp e Tamanho: 16MB</div>
+                            <div class="imagem-upload-box" onclick="document.getElementById('file_input_${bloco.id}').click()" ondragover="event.preventDefault()" ondrop="soltarArquivoVideo(event, '${bloco.id}')">
+                                <input type="file" id="file_input_${bloco.id}" accept="video/*" style="display:none" onchange="carregarVideoLocal(event, '${bloco.id}')">
+                                ${videoPreviewHtml}
+                            </div>
+
+                            <button class="btn-galeria" onclick="abrirGaleriaBot('${bloco.id}', 'video')">
+                                📁 Escolher na Galeria
+                            </button>
+
+                            <button class="btn-legenda-escrever" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'legenda_video')">
+                                <span style="display: flex; align-items: center; gap: 8px;">✏️ <span>Legenda - ${bloco.legenda ? 'Editar' : 'Escrever'}</span></span>
+                                <span style="font-size: 0.75rem; color: #64748b; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${legendaResumo}</span>
+                            </button>
+
+                            <div class="ia-footer-row" style="background: #e0f2fe; border-color: #bae6fd; color: #0369a1; margin-top: 12px;">
+                                <div class="ia-footer-icon-text">
+                                    <span style="font-size:1.1rem;">➦</span> <span>Próximo bloco</span>
+                                </div>
+                                <div class="connector right cyan-border" data-node-id="${bloco.id}" data-type="out" title="Ligar Próximo bloco" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>
+                            </div>
+                        </div>
+                    `;
+               } else if (bloco.type === 'Áudio') {
+    bodyContent = `
+        <div class="canvas-node-header" style="color: #d97706; padding-top: 14px;">
+            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🎙️</span> Enviar Áudio</span>
+        </div>
+        <div class="canvas-node-body">
+            <div style="margin-bottom: 10px; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
+                <span>Enviar como Gravação de Voz</span>
+                <label class="msg-switch">
+                    <input type="checkbox" onchange="toggleAudioVoice(this.checked)">
+                    <span class="msg-slider"></span>
+                </label>
+            </div>
+            
+            ${bloco.audioUrl ? `
+                <!-- VISUAL QUANDO O ÁUDIO ESTÁ CARREGADO -->
+                <div style="margin-top: 10px; text-align: center; background: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffe69c;">
+                    <audio controls src="${bloco.audioUrl}" style="width: 100%; height: 36px; outline: none;"></audio>
+                    <button onclick="removerAudio('${bloco.id}')" style="margin-top: 8px; background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width: 100%;">
+                        🗑️ Remover Áudio
+                    </button>
+                </div>
+            ` : `
+                <!-- VISUAL PADRÃO QUANDO ESTÁ VAZIO -->
+                <div class="audio-upload-box" onclick="document.getElementById('audio_input_${bloco.id}').click()" ondragover="event.preventDefault()" ondrop="soltarArquivoAudio(event, '${bloco.id}')">
+                    <input type="file" id="audio_input_${bloco.id}" accept="audio/*" style="display:none" onchange="carregarAudioLocal(event, '${bloco.id}')">
+                    <span style="font-size: 1.5rem;">📁</span>
+                    <div style="font-size: 0.75rem; color: #92400e; margin-top: 4px;">Arraste um Áudio ou clique para selecionar</div>
+                </div>
+
+                <button class="btn-gravar" onclick="iniciarGravacaoAudio('${bloco.id}')" style="background:#ef4444; color:white; margin-top: 8px; margin-bottom: 8px; width:100%; border:none; padding:8px; border-radius:6px; cursor:pointer;">
+                    🎙️ Gravar um Áudio
+                </button>
+                <button class="btn-galeria" style="background:#f59e0b;" onclick="abrirGaleriaBot('${bloco.id}', 'audio')">
+                    📁 Escolher na Galeria
+                </button>
+            `}
+            
+            <button class="btn-salvar-audio" onclick="alert('Configurações salvas!')" style="margin-top: 8px; width:100%;">
+                💾 Salvar Configurações
+            </button>
+        </div>
+    `;
+              } else if (bloco.type === 'Documento') {
+                    let docPreviewHtml = bloco.documentoUrl ? `<div style="font-weight: bold; color: #0284c7; margin-top: 8px; font-size: 0.9rem;">📄 ${bloco.documentoUrl.split('/').pop() || 'Documento Anexado'}</div>` : `<span style="font-size: 2rem;">📄</span><div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">Arraste um documento ou clique para selecionar</div>`;
+                    let legendaResumo = bloco.legenda ? `Legenda: ${bloco.legenda.substring(0, 24)}...` : 'Nenhuma legenda definida';
+
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #0284c7; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">📄</span> Enviar Documento</span>
+                            <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'legenda_documento')" title="Configurar Legenda">⚙️</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div class="imagem-upload-box" onclick="document.getElementById('file_input_${bloco.id}').click()" ondragover="event.preventDefault()" ondrop="soltarArquivoDocumento(event, '${bloco.id}')">
+                                <input type="file" id="file_input_${bloco.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none" onchange="carregarDocumentoLocal(event, '${bloco.id}')">
+                                ${docPreviewHtml}
+                            </div>
+
+                            <button class="btn-galeria" onclick="abrirGaleriaBot('${bloco.id}', 'documento')">
+                                📁 Escolher na Galeria
+                            </button>
+
+                            <button class="btn-legenda-escrever" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'legenda_documento')">
+                                <span style="display: flex; align-items: center; gap: 8px;">✏️ <span>Legenda - ${bloco.legenda ? 'Editar' : 'Escrever'}</span></span>
+                                <span style="font-size: 0.75rem; color: #64748b; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${legendaResumo}</span>
+                            </button>
+
+                            <div class="ia-footer-row" style="background: #e0f2fe; border-color: #bae6fd; color: #0369a1; margin-top: 12px;">
+                                <div class="ia-footer-icon-text">
+                                    <span style="font-size:1.1rem;">➦</span> <span>Próximo bloco</span>
+                                </div>
+                                <div class="connector right cyan-border" data-node-id="${bloco.id}" data-type="out" title="Ligar Próximo bloco" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Encaminhar Fluxo') {
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #0284c7; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🔀</span> Encaminhar Fluxo</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <label class="menu-label">Fluxo de destino:</label>
+                            <div style="position: relative; margin-bottom: 12px;">
+                                <input type="text" class="msg-input-field" style="margin-bottom: 0; padding-right: 35px; cursor: pointer;" value="${bloco.content || ''}" placeholder="Selecione um fluxo..." onchange="atualizarConteudo('${bloco.id}', this.value)" readonly onclick="abrirBuscaFluxo('${bloco.id}')">
+                                <button style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #0284c7; padding: 5px;" onclick="abrirBuscaFluxo('${bloco.id}')" title="Buscar fluxo">🔍</button>
+                            </div>
+                            <div class="ia-footer-row" style="background: #e0f2fe; border-color: #bae6fd; color: #0369a1;">
+                                <div class="ia-footer-icon-text">
+                                    <span style="font-size:1.1rem;">➦</span> <span>Encaminhar</span>
+                                </div>
+                                <div class="connector right cyan-border" data-node-id="${bloco.id}" data-type="out" title="Ligar Encaminhamento" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Aleatório / Sequencial') {
+                    let modoAlt = bloco.modoAleatorio || 'aleatorio';
+                    let aleatorioOptionsHtml = '';
+                    if (bloco.aleatorioOpcoes) {
+                        bloco.aleatorioOpcoes.forEach((opt) => {
+                            aleatorioOptionsHtml += `
+                                <div class="menu-option-row">
+                                    <span class="menu-drag-handle">⋮⋮</span>
+                                    <input type="text" class="menu-opt-input" value="${opt.text}" onchange="atualizarTextoOpcaoAleatoria('${bloco.id}', '${opt.id}', this.value)">
+                                    <button class="menu-opt-delete" onclick="removerOpcaoAleatoria('${bloco.id}', '${opt.id}')">×</button>
+                                    <div class="connector right cyan-border" data-node-id="${bloco.id}" data-extra-id="${opt.id}" data-type="out" title="Ligar ${opt.text}" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', '${opt.id}')"></div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #0284c7; padding-top: 14px;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:1.1rem;">🔀</span> Aleatório / Sequencial</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <label class="menu-label">Modo de distribuição:</label>
+                            <div style="display: flex; background: #e2e8f0; border-radius: 6px; padding: 3px; gap: 3px; margin-bottom: 12px;">
+                                <button style="flex:1; border:none; background:${modoAlt==='aleatorio'?'#0284c7':'transparent'}; color:${modoAlt==='aleatorio'?'white':'#64748b'}; padding:6px; font-size:0.8rem; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="mudarModoAleatorio('${bloco.id}', 'aleatorio')">Aleatório</button>
+                                <button style="flex:1; border:none; background:${modoAlt==='sequencial'?'#0284c7':'transparent'}; color:${modoAlt==='sequencial'?'white':'#64748b'}; padding:6px; font-size:0.8rem; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="mudarModoAleatorio('${bloco.id}', 'sequencial')">Sequencial</button>
+                            </div>
+
+                            <label class="menu-label">Saídas de distribuição:</label>
+                            <div style="margin-top: 5px;">
+                                ${aleatorioOptionsHtml}
+                            </div>
+                            
+                            <button class="btn-add-menu-opt" style="background: #0284c7;" onclick="adicionarOpcaoAleatoria('${bloco.id}')" title="Adicionar Saída">+</button>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Mensagem' || bloco.type === 'Enviar Mensagem') {
+                    let totalVars = bloco.variations ? bloco.variations.length : 1;
+                    let isChecked = bloco.variationsEnabled ? 'checked' : '';
+                    let variationsBoxDisplay = bloco.variationsEnabled ? 'block' : 'none';
+
+                    let variationsHtml = '';
+                    if (bloco.variations) {
+                        bloco.variations.forEach((vText, vIndex) => {
+                            variationsHtml += `
+                                <div class="msg-variation-item-row">
+                                    <input type="text" value="${vText}" onchange="atualizarTextoVariacaoMensagem('${bloco.id}', ${vIndex}, this.value)">
+                                    ${bloco.variations.length > 1 ? `<button class="btn-remove-variation" onclick="removerVariacaoMensagem('${bloco.id}', ${vIndex})">×</button>` : ''}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    bodyContent = `
+                        <div class="canvas-node-header"><span>📁 Enviar Mensagem</span></div>
+                        <div class="canvas-node-body">
+                            <div class="msg-variacao-row">
+                                <span>Variação de mensagem (${totalVars}/6)</span>
+                                <label class="msg-switch">
+                                    <input type="checkbox" ${isChecked} onchange="toggleVariacoesMensagem('${bloco.id}', this.checked)">
+                                    <span class="msg-slider"></span>
+                                </label>
+                            </div>
+                            <input type="text" class="msg-input-field" value="${bloco.content || ''}" placeholder="Digite sua mensagem..." onchange="atualizarConteudo('${bloco.id}', this.value)">
+                            
+                            <div class="msg-variations-box" style="display: ${variationsBoxDisplay};">
+                                <div class="msg-variations-subtitle">Variações da mensagem (serão usadas aleatoriamente)</div>
+                                ${variationsHtml}
+                                ${totalVars < 6 ? `<button class="btn-add-variation-link" onclick="adicionarVariacaoMensagem('${bloco.id}')">Adicionar variação</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else if (bloco.type === 'Menu') {
+                    let isCheckedNum = bloco.mostrarNumeros ? 'checked' : '';
+                    let optionsHtml = '';
+                    if (bloco.opcoesMenu) {
+                        bloco.opcoesMenu.forEach((opt, index) => {
+                            let numLabel = bloco.mostrarNumeros ? `<span class="menu-opt-number">${index + 1}.</span>` : '';
+                            optionsHtml += `
+                                <div class="menu-option-row">
+                                    <span class="menu-drag-handle">⋮⋮</span>
+                                    ${numLabel}
+                                    <input type="text" class="menu-opt-input" value="${opt.text}" onchange="atualizarTextoOpcaoMenu('${bloco.id}', '${opt.id}', this.value)">
+                                    <button class="menu-opt-delete" onclick="removerOpcaoMenu('${bloco.id}', '${opt.id}')">×</button>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="${opt.id}" data-type="out" title="Ligar ${opt.text}" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', '${opt.id}')"></div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    let minsTimeout = bloco.configTimeout ? bloco.configTimeout.minutos : 5;
+
+                    bodyContent = `
+                        <div class="canvas-node-header"><span>🗂️ Menu de Opções</span></div>
+                        <div class="canvas-node-body">
+                            <label class="menu-label">Enunciado do Menu:</label>
+                            <textarea class="menu-textarea" rows="1" onchange="atualizarEnunciadoMenu('${bloco.id}', this.value)">${bloco.enunciadoMenu || ''}</textarea>
+                            
+                            <label class="menu-label">Variável para armazenar a opção selecionada:</label>
+                            <div class="menu-var-box">
+                                <span>((</span>
+                                <input type="text" class="menu-var-input" placeholder="Ex: opcao_selecionada" value="${bloco.variavelMenu || ''}" onchange="atualizarVariavelMenu('${bloco.id}', this.value)">
+                                <span>))</span>
+                            </div>
+
+                            <div class="menu-toggle-row">
+                                <span>Mostrar número das opções:</span>
+                                <label class="msg-switch">
+                                    <input type="checkbox" ${isCheckedNum} onchange="toggleMostrarNumerosMenu('${bloco.id}', this.checked)">
+                                    <span class="msg-slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="options-list-${bloco.id}" style="margin-top: 5px;">
+                                ${optionsHtml}
+                            </div>
+                            
+                            <button class="btn-add-menu-opt" onclick="adicionarOpcaoMenu('${bloco.id}')" title="Adicionar Opção">+</button>
+                            
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 15px;">
+                                <div class="menu-footer-item">
+                                    <div class="menu-footer-icon-text">
+                                        <span style="color:#3b82f6; font-size:1.1rem;">➦</span> <span>Nenhuma das Alternativas</span>
+                                    </div>
+                                    <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'nenhuma')">⚙️</span>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="nenhuma" data-type="out" title="Ligar Nenhuma Opção" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'nenhuma')"></div>
+                                </div>
+                                <div class="menu-footer-item">
+                                    <div class="menu-footer-icon-text">
+                                        <span style="color:#3b82f6; font-size:1.1rem;">⏱</span> <span>${minsTimeout} minutos sem responder</span>
+                                    </div>
+                                    <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'timeout')">⚙️</span>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="timeout" data-type="out" title="Ligar Timeout" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'timeout')"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                } else if (bloco.type === 'Perguntas') {
+                    let checkedAttr = bloco.salvarContato ? 'checked' : '';
+                    let perguntasItensHtml = '';
+                    
+                    if (!bloco.perguntasLista) {
+                        bloco.perguntasLista = [{ id: 'p_1', texto: 'Qual o seu nome?', variavel: 'nome' }];
+                    }
+
+                    bloco.perguntasLista.forEach((pItem) => {
+                        perguntasItensHtml += `
+                            <div class="perguntas-card-inner">
+                                <div style="position:relative; margin-bottom:8px;">
+                                    <input type="text" style="width:100%; padding:8px 30px 8px 10px; border:1px solid #cbd5e1; border-radius:6px; color:#1e293b; background:white; font-size:0.9rem;" value="${pItem.texto}" onchange="atualizarItemPerguntaTexto('${bloco.id}', '${pItem.id}', this.value)">
+                                    ${bloco.perguntasLista.length > 1 ? `<button style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#ef4444; font-weight:bold;" onclick="removerItemPergunta('${bloco.id}', '${pItem.id}')">×</button>` : ''}
+                                </div>
+                                <div style="display:flex; align-items:center; background:white; border:1px solid #cbd5e1; border-radius:6px; padding:4px 8px;">
+                                    <span style="font-size:0.8rem; color:#64748b; font-weight:600; margin-right:6px;">Variável:</span>
+                                    <span style="color:#64748b; font-weight:bold;">{{</span>
+                                    <input type="text" style="flex:1; border:none; background:transparent; padding:2px 6px; font-size:0.85rem; color:#334155; outline:none;" value="${pItem.variavel}" onchange="atualizarItemPerguntaVariavel('${bloco.id}', '${pItem.id}', this.value)">
+                                    <span style="color:#64748b; font-weight:bold;">}}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    let minsTimeout = bloco.configTimeout ? bloco.configTimeout.minutos : 5;
+
+                    bodyContent = `
+                        <div class="canvas-node-header"><span>💬 Sequência de Perguntas</span></div>
+                        <div class="canvas-node-body">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:0.85rem;">
+                                <input type="checkbox" ${checkedAttr} onchange="atualizarSalvarContato('${bloco.id}', this.checked)">
+                                <span style="color:#1e293b; font-weight:500;">Salvar respostas no contato</span>
+                            </div>
+                            
+                            ${perguntasItensHtml}
+
+                            <button class="btn-add-circle-green" onclick="adicionarItemPergunta('${bloco.id}')" title="Adicionar Pergunta">+</button>
+
+                            <div style="margin-top: 15px;">
+                                <label style="font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px; display:block;">Palavras para sair da sequência:</label>
+                                <input type="text" class="msg-input-field" value="${bloco.palavrasSair || 'Ex: sair, cancelar, parar'}" onchange="atualizarPalavrasSair('${bloco.id}', this.value)">
+                            </div>
+
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
+                                <div class="menu-footer-item">
+                                    <div class="menu-footer-icon-text">
+                                        <span style="color:#10b981; font-size:1.1rem;">➦</span> <span>Quando responder</span>
+                                    </div>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="quando_responder" data-type="out" title="Quando responder" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'quando_responder')"></div>
+                                </div>
+                                <div class="menu-footer-item">
+                                    <div class="menu-footer-icon-text">
+                                        <span style="color:#10b981; font-size:1.1rem;">↩</span> <span>Quando sair</span>
+                                    </div>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="quando_sair" data-type="out" title="Quando sair" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'quando_sair')"></div>
+                                </div>
+                                <div class="menu-footer-item">
+                                    <div class="menu-footer-icon-text">
+                                        <span style="color:#10b981; font-size:1.1rem;">⏱</span> <span>${minsTimeout} minutos sem responder</span>
+                                    </div>
+                                    <span class="menu-footer-settings" onclick="abrirConfiguracaoEngrenagem('${bloco.id}', 'timeout')">⚙️</span>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="timeout" data-type="out" title="Timeout Perguntas" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'timeout')"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                } else if (bloco.type === 'Switch (Múltiplas Condições)' || bloco.type === 'Condicional (IF)') {
+                    let conditionsHtml = '';
+                    let count = bloco.conditions ? bloco.conditions.length : 0;
+
+                    if (bloco.conditions) {
+                        bloco.conditions.forEach((cond) => {
+                            let operadorDropdownId = `dropdown_${bloco.id}_${cond.id}`;
+                            let opcoesHtml = '';
+                            listaOperadores.forEach(op => {
+                                opcoesHtml += `<div class="logic-dropdown-item" onclick="selecionarOperador('${bloco.id}', '${cond.id}', '${op}')">${op}</div>`;
+                            });
+
+                            let outputExtraHtml = '';
+                            if (bloco.type === 'Switch (Múltiplas Condições)') {
+                                outputExtraHtml = `
+                                    <div class="logic-output-row">
+                                        <span>Saída: ${cond.title}</span>
+                                        <div class="connector right" data-node-id="${bloco.id}" data-extra-id="${cond.id}" data-type="out" title="Ligar ${cond.title}" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', '${cond.id}')"></div>
+                                    </div>
+                                `;
+                            }
+
+                            conditionsHtml += `
+                                <div class="logic-card-interno">
+                                    <div class="logic-top-row">
+                                        <span class="logic-dots">⋮⋮</span>
+                                        <input type="text" class="logic-title-input" value="${cond.title}" onchange="atualizarLogicaProp('${bloco.id}', '${cond.id}', 'title', this.value)">
+                                        <button class="btn-delete-logic-item" onclick="removerLogicaCondicao('${bloco.id}', '${cond.id}')" title="Excluir condição">×</button>
+                                    </div>
+                                    <div class="logic-select-wrapper">
+                                        <div class="logic-select-row" onclick="toggleDropdown(event, '${operadorDropdownId}')">
+                                            <span>${cond.operator}</span>
+                                            <span style="font-size: 0.75rem; color: #94a3b8;">▼</span>
+                                        </div>
+                                        <div class="logic-dropdown-menu" id="${operadorDropdownId}">
+                                            ${opcoesHtml}
+                                        </div>
+                                    </div>
+                                    <input type="text" class="logic-input-field" value="${cond.compareValue}" onchange="atualizarLogicaProp('${bloco.id}', '${cond.id}', 'compareValue', this.value)">
+                                    <input type="text" class="logic-input-field" value="${cond.valuesForComp || ''}" placeholder="Valores para comparação" onchange="atualizarLogicaProp('${bloco.id}', '${cond.id}', 'valuesForComp', this.value)">
+
+                                    ${outputExtraHtml}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    let cabecalhoTitulo = bloco.type === 'Condicional (IF)' ? '⚙️ Condicional (IF)' : '🔀 Switch (Múltiplas Condições)';
+                    let botaoAdicionarCondicao = count < 6 ? `<button class="btn-add-circle-red" onclick="adicionarLogicaCondicao('${bloco.id}')" title="Adicionar Condição">+</button>` : '';
+
+                    let fallbackHtml = '';
+                    if (bloco.type === 'Switch (Múltiplas Condições)') {
+                        fallbackHtml = `
+                            <div class="switch-fallback-row">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="color:#ef4444; font-size:1.1rem;">➦</span> <span>Nenhuma das Condições</span>
+                                </div>
+                                <div class="connector right red-border" data-node-id="${bloco.id}" data-extra-id="fallback" data-type="out" title="Ligar Fallback" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'fallback')"></div>
+                            </div>
+                        `;
+                    }
+
+                    let trueFalseHtml = '';
+                    if (bloco.type === 'Condicional (IF)') {
+                        trueFalseHtml = `
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <div class="logic-output-row" style="flex:1; background: #f0fdf4; border-color: #bbf7d0; color: #166534;">
+                                    <span>Verdadeiro</span>
+                                    <div class="connector right" data-node-id="${bloco.id}" data-extra-id="true" data-type="out" title="Verdadeiro" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'true')"></div>
+                                </div>
+                                <div class="logic-output-row" style="flex:1; background: #fef2f2; border-color: #fecdd3; color: #991b1b;">
+                                    <span>Falso</span>
+                                    <div class="connector right red-border" data-node-id="${bloco.id}" data-extra-id="false" data-type="out" title="Falso" onmousedown="iniciarArrastoConexaoExtra(event, '${bloco.id}', 'false')"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    bodyContent = `
+                        <div class="canvas-node-header" style="color: #e11d48; padding-top: 14px;">
+                            <span>${cabecalhoTitulo}</span>
+                        </div>
+                        <div class="canvas-node-body">
+                            <div style="display: flex; background: #e2e8f0; border-radius: 6px; padding: 3px; gap: 3px; margin-bottom: 12px;">
+                                <button style="flex:1; border:none; background:${bloco.logicType==='AND'?'#e11d48':'transparent'}; color:${bloco.logicType==='AND'?'white':'#64748b'}; padding:6px; font-size:0.8rem; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="mudarTipoLogica('${bloco.id}', 'AND')">E (AND)</button>
+                                <button style="flex:1; border:none; background:${bloco.logicType==='OR'?'#e11d48':'transparent'}; color:${bloco.logicType==='OR'?'white':'#64748b'}; padding:6px; font-size:0.8rem; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="mudarTipoLogica('${bloco.id}', 'OR')">OU (OR)</button>
+                            </div>
+
+                            ${conditionsHtml}
+                            ${botaoAdicionarCondicao}
+                            ${trueFalseHtml}
+                            ${fallbackHtml}
+                        </div>
+                    `;
+                }
+
+                let leftConnector = !bloco.isInicio ? `<div class="connector left" data-node-id="${bloco.id}" data-type="in" title="Conectar neste bloco" onmouseup="soltarArrastoConexao('${bloco.id}')"></div>` : '';
+                let rightConnector = (bloco.type !== 'Menu' && bloco.type !== 'Perguntas' && bloco.type !== 'Switch (Múltiplas Condições)' && bloco.type !== 'Condicional (IF)' && bloco.type !== 'Tempo de Espera' && bloco.type !== 'Agente IA' && bloco.type !== 'Imagem' && bloco.type !== 'Vídeo' && bloco.type !== 'Documento' && bloco.type !== 'Áudio' && bloco.type !== 'Aleatório / Sequencial' && bloco.type !== 'Encaminhar Fluxo' && bloco.type !== 'Fim' && bloco.type !== 'Anotações') ? `<div class="connector right" data-node-id="${bloco.id}" data-type="out" title="Ligar Próximo bloco" onmousedown="iniciarArrastoConexao(event, '${bloco.id}')"></div>` : '';
+
+                div.innerHTML = topBarHtml + bodyContent + leftConnector + rightConnector;
+
+                div.onmousedown = (e) => {
+                    if (e.target.classList.contains('connector') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') || e.target.closest('.logic-dropdown-menu') || e.target.closest('.imagem-upload-box')) return;
+                    
+                    let startMouseX = e.clientX;
+                    let startMouseY = e.clientY;
+                    let startBlockX = bloco.x;
+                    let startBlockY = bloco.y;
+
+                    document.onmousemove = (ev) => {
+                        bloco.x = startBlockX + (ev.clientX - startMouseX) / zoom;
+                        bloco.y = startBlockY + (ev.clientY - startMouseY) / zoom;
+                        div.style.left = bloco.x + 'px';
+                        div.style.top = bloco.y + 'px';
+                        renderizarCanvas();
+                    };
+
+                    document.onmouseup = () => {
+                        document.onmousemove = null;
+                        document.onmouseup = null;
+                    };
+                };
+
+                wrapper.appendChild(div);
+            });
+
+            // Renderizar Conexões SVG
+            conexoes.forEach((conn, index) => {
+                let posFrom = getConnectorPos(conn.from, 'out', null, conn.fromExtra);
+                let posTo = getConnectorPos(conn.to, 'in');
+
+                if (posFrom && posTo) {
+                    let pathId = `conn_path_${index}`;
+                    let isSelected = (conexaoSelecionadaId === index);
+                    let strokeColor = isSelected ? '#38bdf8' : '#3b82f6';
+                    let strokeWidth = isSelected ? 5 : 3;
+
+                    let dx = Math.abs(posTo.x - posFrom.x) * 0.5;
+                    let pathData = `M ${posFrom.x} ${posFrom.y} C ${posFrom.x + dx} ${posFrom.y}, ${posTo.x - dx} ${posTo.y}, ${posTo.x} ${posTo.y}`;
+
+                    let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', pathData);
+                    path.setAttribute('class', `connection-line ${isSelected ? 'selected' : ''}`);
+                    path.onclick = (e) => {
+                        e.stopPropagation();
+                        conexaoSelecionadaId = index;
+                        renderizarCanvas();
+                    };
+                    svg.appendChild(path);
+
+                    // Botão de deletar linha se selecionada
+                
+                        let midX = (posFrom.x + posTo.x) / 2;
+                        let midY = (posFrom.y + posTo.y) / 2;
+
+                        let gBtn = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                        gBtn.setAttribute('class', 'delete-line-btn');
+                        gBtn.setAttribute('style', 'transform-origin: center; transform-box: fill-box;');
+                        gBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            conexoes.splice(index, 1);
+                            conexaoSelecionadaId = null;
+                            renderizarCanvas();
+                        };
+
+                        let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', midX);
+                        circle.setAttribute('cy', midY);
+                        circle.setAttribute('r', '12');
+                        circle.setAttribute('style', 'transform-origin: center; transform-box: fill-box;');
+
+                        let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        text.setAttribute('x', midX);
+                        text.setAttribute('y', midY + 3);
+                        text.setAttribute('text-anchor', 'middle');
+                        text.setAttribute('fill', '#ef4444');
+                        text.setAttribute('font-size', '12');
+                        text.setAttribute('font-weight', 'bold');
+                        text.textContent = '🗑️';
+                        text.setAttribute('pointer-events', 'none'); // Faz o mouse "ignorar" o emoji para não bugar
+                        gBtn.setAttribute('cursor', 'pointer'); // Deixa o cursor com a "mãozinha" ao passar por cima
+
+                        gBtn.appendChild(circle);
+                        gBtn.appendChild(text);
+                        svg.appendChild(gBtn);
+                    
+                }
+            });
+
+            if (coordsTempFio) {
+                let posFrom = getConnectorPos(coordsTempFio.from, 'out', null, coordsTempFio.fromExtra);
+                if (posFrom) {
+                    let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    let dx = Math.abs(coordsTempFio.toX - posFrom.x) * 0.5;
+                    let pathData = `M ${posFrom.x} ${posFrom.y} C ${posFrom.x + dx} ${posFrom.y}, ${coordsTempFio.toX - dx} ${coordsTempFio.toY}, ${coordsTempFio.toX} ${coordsTempFio.toY}`;
+                    path.setAttribute('d', pathData);
+                    path.setAttribute('class', 'connection-line');
+                    path.style.strokeDasharray = '5,5';
+                    svg.appendChild(path);
+                }
+            }
+        }
+
+        function iniciarArrastoConexao(e, blocoId) {
+            e.stopPropagation();
+            criandoConexaoDe = { from: blocoId, fromExtra: null };
+            
+            document.onmousemove = (ev) => {
+                const rect = container.getBoundingClientRect();
+                const toX = (ev.clientX - rect.left - panX) / zoom;
+                const toY = (ev.clientY - rect.top - panY) / zoom;
+                renderizarCanvas({ from: blocoId, fromExtra: null, toX, toY });
+            };
+
+            document.onmouseup = () => {
+                criandoConexaoDe = null;
+                document.onmousemove = null;
+                document.onmouseup = null;
+                renderizarCanvas();
+            };
+        }
+
+        function iniciarArrastoConexaoExtra(e, blocoId, extraId) {
+            e.stopPropagation();
+            criandoConexaoDe = { from: blocoId, fromExtra: extraId };
+
+            document.onmousemove = (ev) => {
+                const rect = container.getBoundingClientRect();
+                const toX = (ev.clientX - rect.left - panX) / zoom;
+                const toY = (ev.clientY - rect.top - panY) / zoom;
+                renderizarCanvas({ from: blocoId, fromExtra: extraId, toX, toY });
+            };
+
+            document.onmouseup = () => {
+                criandoConexaoDe = null;
+                document.onmousemove = null;
+                document.onmouseup = null;
+                renderizarCanvas();
+            };
+        }
+
+        function soltarArrastoConexao(blocoIdDestino) {
+            if (criandoConexaoDe && criandoConexaoDe.from !== blocoIdDestino) {
+                // Remover conexão anterior do mesmo 'fromExtra' se houver
+                conexoes = conexoes.filter(c => !(c.from === criandoConexaoDe.from && c.fromExtra === criandoConexaoDe.fromExtra));
+                
+                conexoes.push({
+                    from: criandoConexaoDe.from,
+                    fromOption: null,
+                    fromExtra: criandoConexaoDe.fromExtra,
+                    to: blocoIdDestino
+                });
+            }
+            criandoConexaoDe = null;
+            renderizarCanvas();
+        }
+
+        function removerBloco(blocoId) {
+            blocosCanvas = blocosCanvas.filter(b => b.id !== blocoId);
+            conexoes = conexoes.filter(c => c.from !== blocoId && c.to !== blocoId);
+            renderizarCanvas();
+        }
+
+        function atualizarConteudo(blocoId, valor) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.content = valor;
+        }
+
+        function atualizarTempoValor(blocoId, val) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.tempoEsperaValor = parseInt(val) || 1;
+        }
+
+        function atualizarTempoUnidade(blocoId, unidade) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.tempoEsperaUnidade = unidade;
+        }
+
+        function toggleBloquearCliente(blocoId, status) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.bloquearCliente = status;
+        }
+
+        function toggleVariacoesMensagem(blocoId, status) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) {
+                b.variationsEnabled = status;
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarTextoVariacaoMensagem(blocoId, index, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.variations) {
+                b.variations[index] = texto;
+            }
+        }
+
+        function adicionarVariacaoMensagem(blocoId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.variations && b.variations.length < 6) {
+                b.variations.push(`Variação ${b.variations.length + 1}`);
+                renderizarCanvas();
+            }
+        }
+
+        function removerVariacaoMensagem(blocoId, index) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.variations && b.variations.length > 1) {
+                b.variations.splice(index, 1);
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarEnunciadoMenu(blocoId, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.enunciadoMenu = texto;
+        }
+
+        function atualizarVariavelMenu(blocoId, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.variavelMenu = texto;
+        }
+
+        function toggleMostrarNumerosMenu(blocoId, status) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) {
+                b.mostrarNumeros = status;
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarTextoOpcaoMenu(blocoId, optId, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.opcoesMenu) {
+                let opt = b.opcoesMenu.find(o => o.id === optId);
+                if(opt) opt.text = texto;
+            }
+        }
+
+        function adicionarOpcaoMenu(blocoId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.opcoesMenu) {
+                b.opcoesMenu.push({ id: "opt_" + Math.random().toString(36).substring(7), text: `Opção ${b.opcoesMenu.length + 1}` });
+                renderizarCanvas();
+            }
+        }
+
+        function removerOpcaoMenu(blocoId, optId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.opcoesMenu && b.opcoesMenu.length > 1) {
+                b.opcoesMenu = b.opcoesMenu.filter(o => o.id !== optId);
+                conexoes = conexoes.filter(c => !(c.from === blocoId && c.fromExtra === optId));
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarSalvarContato(blocoId, status) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.salvarContato = status;
+        }
+
+        function atualizarItemPerguntaTexto(blocoId, pId, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.perguntasLista) {
+                let p = b.perguntasLista.find(item => item.id === pId);
+                if(p) p.texto = texto;
+            }
+        }
+
+        function atualizarItemPerguntaVariavel(blocoId, pId, varName) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.perguntasLista) {
+                let p = b.perguntasLista.find(item => item.id === pId);
+                if(p) p.variavel = varName;
+            }
+        }
+
+        function adicionarItemPergunta(blocoId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.perguntasLista) {
+                b.perguntasLista.push({ id: "p_" + Math.random().toString(36).substring(7), texto: "Qual a próxima pergunta?", variavel: `var_${b.perguntasLista.length + 1}` });
+                renderizarCanvas();
+            }
+        }
+
+        function removerItemPergunta(blocoId, pId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.perguntasLista && b.perguntasLista.length > 1) {
+                b.perguntasLista = b.perguntasLista.filter(item => item.id !== pId);
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarPalavrasSair(blocoId, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) b.palavrasSair = texto;
+        }
+
+        function mudarTipoLogica(blocoId, tipo) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) {
+                b.logicType = tipo;
+                renderizarCanvas();
+            }
+        }
+
+        function adicionarLogicaCondicao(blocoId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.conditions && b.conditions.length < 6) {
+                b.conditions.push({ id: "cond_" + Math.random().toString(36).substring(7), title: `Condição ${b.conditions.length + 1}`, operator: "Igual a", compareValue: "Valor", valuesForComp: "" });
+                renderizarCanvas();
+            }
+        }
+
+        function removerLogicaCondicao(blocoId, condId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.conditions && b.conditions.length > 1) {
+                b.conditions = b.conditions.filter(c => c.id !== condId);
+                conexoes = conexoes.filter(c => !(c.from === blocoId && c.fromExtra === condId));
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarLogicaProp(blocoId, condId, prop, valor) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.conditions) {
+                let c = b.conditions.find(item => item.id === condId);
+                if(c) c[prop] = valor;
+            }
+        }
+
+        function toggleDropdown(e, dropdownId) {
+            e.stopPropagation();
+            fecharTodosDropdowns();
+            let dd = document.getElementById(dropdownId);
+            if (dd) {
+                dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        function selecionarOperador(blocoId, condId, operador) {
+            atualizarLogicaProp(blocoId, condId, 'operator', operador);
+            fecharTodosDropdowns();
+            renderizarCanvas();
+        }
+
+        function fecharTodosDropdowns(e) {
+            document.querySelectorAll('.logic-dropdown-menu').forEach(dd => {
+                dd.style.display = 'none';
+            });
+        }
+
+        function mudarModoAleatorio(blocoId, modo) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b) {
+                b.modoAleatorio = modo;
+                renderizarCanvas();
+            }
+        }
+
+        function adicionarOpcaoAleatoria(blocoId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.aleatorioOpcoes) {
+                b.aleatorioOpcoes.push({ id: "alt_" + Math.random().toString(36).substring(7), text: `Saída ${b.aleatorioOpcoes.length + 1}` });
+                renderizarCanvas();
+            }
+        }
+
+        function removerOpcaoAleatoria(blocoId, altId) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.aleatorioOpcoes && b.aleatorioOpcoes.length > 1) {
+                b.aleatorioOpcoes = b.aleatorioOpcoes.filter(o => o.id !== altId);
+                conexoes = conexoes.filter(c => !(c.from === blocoId && c.fromExtra === altId));
+                renderizarCanvas();
+            }
+        }
+
+        function atualizarTextoOpcaoAleatoria(blocoId, altId, texto) {
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if(b && b.aleatorioOpcoes) {
+                let opt = b.aleatorioOpcoes.find(o => o.id === altId);
+                if(opt) opt.text = texto;
+            }
+        }
+
+        // --- UPLOAD E GALERIA DE MÍDIA ---
+        function carregarImagemLocal(e, blocoId) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    let b = blocosCanvas.find(item => item.id === blocoId);
+                    if(b) {
+                        b.imagemUrl = evt.target.result;
+                        renderizarCanvas();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function soltarArquivoImagem(e, blocoId) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    let b = blocosCanvas.find(item => item.id === blocoId);
+                    if(b) {
+                        b.imagemUrl = evt.target.result;
+                        renderizarCanvas();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function carregarVideoLocal(e, blocoId) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    let b = blocosCanvas.find(item => item.id === blocoId);
+                    if(b) {
+                        b.videoUrl = evt.target.result;
+                        renderizarCanvas();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function soltarArquivoVideo(e, blocoId) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('video/')) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    let b = blocosCanvas.find(item => item.id === blocoId);
+                    if(b) {
+                        b.videoUrl = evt.target.result;
+                        renderizarCanvas();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function carregarDocumentoLocal(e, blocoId) {
+            const file = e.target.files[0];
+            if (file) {
+                let b = blocosCanvas.find(item => item.id === blocoId);
+                if(b) {
+                    b.documentoUrl = file.name;
+                    renderizarCanvas();
+                }
+            }
+        }
+
+        function soltarArquivoDocumento(e, blocoId) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                let b = blocosCanvas.find(item => item.id === blocoId);
+                if(b) {
+                    b.documentoUrl = file.name;
+                    renderizarCanvas();
+                }
+            }
+        }
+
+        function abrirGaleriaBot(blocoId, tipo) {
+            blocoGaleriaAtivoId = blocoId;
+            tipoGaleriaAtivo = tipo;
+            galeriaUrlSelecionada = null;
+
+            const grid = document.getElementById('gallery-grid-items');
+            const tituloModal = document.getElementById('gallery-modal-title');
+            tituloModal.innerText = tipo === 'imagem' ? 'Galeria de Imagens' : (tipo === 'video' ? 'Galeria de Vídeos' : (tipo === 'audio' ? 'Galeria de Áudio' : 'Galeria de Documentos'));
+
+            let itens = tipo === 'imagem' ? galeriaImagensBot : (tipo === 'video' ? galeriaVideosBot : galeriaDocumentosBot);
+            let html = '';
+
+            itens.forEach(item => {
+                let previewContent = tipo === 'imagem' ? `<img src="${item.url}" alt="${item.nome}">` : `<div style="font-size:2rem; padding:15px;">📄</div>`;
+                html += `
+                    <div class="gallery-item" onclick="selecionarItemGaleria(this, '${item.url}')">
+                        ${previewContent}
+                        <span>${item.nome}</span>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+            document.getElementById('gallery-modal-overlay').style.display = 'flex';
+        }
+
+        function selecionarItemGaleria(el, url) {
+            document.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            galeriaUrlSelecionada = url;
+        }
+
+        function confirmarEscolhaGaleria() {
+            if (galeriaUrlSelecionada && blocoGaleriaAtivoId) {
+                let b = blocosCanvas.find(item => item.id === blocoGaleriaAtivoId);
+                if (b) {
+                    if (tipoGaleriaAtivo === 'imagem') b.imagemUrl = galeriaUrlSelecionada;
+                    else if (tipoGaleriaAtivo === 'video') b.videoUrl = galeriaUrlSelecionada;
+                    else if (tipoGaleriaAtivo === 'documento') b.documentoUrl = galeriaUrlSelecionada;
+                    else if (tipoGaleriaAtivo === 'audio') b.audioUrl = galeriaUrlSelecionada;
+                    renderizarCanvas();
+                }
+            }
+            fecharGaleriaBot();
+        }
+
+        function fecharGaleriaBot() {
+            document.getElementById('gallery-modal-overlay').style.display = 'none';
+            blocoGaleriaAtivoId = null;
+            galeriaUrlSelecionada = null;
+        }
+
+        // --- CONFIGURAÇÃO DE ENGRENAGENS (LEGENDA / IA / TIMEOUT / NENHUMA) ---
+        function abrirConfiguracaoEngrenagem(blocoId, tipo) {
+            engrenagemEditando = { blocoId, tipo };
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if (!b) return;
+
+            const titulo = document.getElementById('settings-modal-title');
+            const subtitulo = document.getElementById('settings-modal-subtitle');
+            const corpo = document.getElementById('settings-content-body');
+
+            if (tipo === 'legenda_imagem' || tipo === 'legenda_video' || tipo === 'legenda_documento' || tipo === 'legenda_documento' || tipo === 'legenda_audio') {
+                titulo.innerText = 'Configurar Legenda da Mídia';
+                subtitulo.innerText = 'Adicione uma legenda opcional para acompanhar o arquivo';
+                corpo.innerHTML = `
+                    <div class="form-group">
+                        <label>Texto da Legenda</label>
+                        <textarea id="inputLegendaModal" rows="4" placeholder="Digite a legenda...">${b.legenda || ''}</textarea>
+                    </div>
+                `;
+            } else if (tipo === 'agente_ia') {
+                titulo.innerText = 'Configurar Agente IA';
+                subtitulo.innerText = 'Defina os parâmetros do assistente de inteligência artificial';
+                let conf = b.configAgente || { provider: 'OpenAI (GPT-4o)', nomeAgente: 'Atendente Virtual', tipoAgente: 'Assistente Geral', descricao: '' };
+                corpo.innerHTML = `
+                    <div class="form-group">
+                        <label>Provedor de IA</label>
+                        <select id="iaProvider">
+                            <option value="OpenAI (GPT-4o)" ${conf.provider==='OpenAI (GPT-4o)'?'selected':''}>OpenAI (GPT-4o)</option>
+                            <option value="Anthropic (Claude 3.5)" ${conf.provider==='Anthropic (Claude 3.5)'?'selected':''}>Anthropic (Claude 3.5)</option>
+                            <option value="Gemini (1.5 Pro)" ${conf.provider==='Gemini (1.5 Pro)'?'selected':''}>Gemini (1.5 Pro)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nome do Agente</label>
+                        <input type="text" id="iaNome" value="${conf.nomeAgente}">
+                    </div>
+                    <div class="form-group">
+                        <label>Instrução / Prompt do Sistema</label>
+                        <textarea id="iaDescricao" rows="3">${conf.descricao}</textarea>
+                    </div>
+                `;
+            } else if (tipo === 'nenhuma') {
+                titulo.innerText = 'Configuração: Nenhuma das Alternativas';
+                subtitulo.innerText = 'Ação realizada quando o usuário digita uma opção inválida';
+                let conf = b.configNenhuma || { tentativas: 3, mensagem: 'Opção inválida.' };
+                corpo.innerHTML = `
+                    <div class="form-group">
+                        <label>Mensagem de Erro / Aviso</label>
+                        <input type="text" id="nenhumaMensagem" value="${conf.mensagem}">
+                    </div>
+                    <div class="form-group">
+                        <label>Tentativas máximas permitidas</label>
+                        <input type="number" id="nenhumaTentativas" value="${conf.tentativas}" min="1" max="10">
+                    </div>
+                `;
+            } else if (tipo === 'timeout') {
+                titulo.innerText = 'Configuração: Tempo Limite (Timeout)';
+                subtitulo.innerText = 'Ação realizada quando o usuário fica inativo';
+                let conf = b.configTimeout || { minutos: 5, mensagem: 'Tempo esgotado.' };
+                corpo.innerHTML = `
+                    <div class="form-group">
+                        <label>Minutos sem resposta</label>
+                        <input type="number" id="timeoutMinutos" value="${conf.minutos}" min="1" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label>Mensagem de Timeout</label>
+                        <input type="text" id="timeoutMensagem" value="${conf.mensagem}">
+                    </div>
+                `;
+            }
+
+            document.getElementById('settings-modal-overlay').style.display = 'flex';
+        }
+
+        function fecharModalConfiguracao() {
+            document.getElementById('settings-modal-overlay').style.display = 'none';
+            engrenagemEditando = { blocoId: null, tipo: null };
+        }
+
+        function salvarConfiguracaoEngrenagem() {
+            let { blocoId, tipo } = engrenagemEditando;
+            let b = blocosCanvas.find(item => item.id === blocoId);
+            if (!b) return;
+
+            if (tipo === 'legenda_imagem' || tipo === 'legenda_video' || tipo === 'legenda_documento' || tipo === 'legenda_audio') {
+                const txt = document.getElementById('inputLegendaModal').value;
+                b.legenda = txt;
+            } else if (tipo === 'agente_ia') {
+                b.configAgente = {
+                    provider: document.getElementById('iaProvider').value,
+                    nomeAgente: document.getElementById('iaNome').value,
+                    tipoAgente: 'Assistente Geral',
+                    descricao: document.getElementById('iaDescricao').value
+                };
+            } else if (tipo === 'nenhuma') {
+                b.configNenhuma = {
+                    mensagem: document.getElementById('nenhumaMensagem').value,
+                    tentativas: parseInt(document.getElementById('nenhumaTentativas').value) || 3
+                };
+            } else if (tipo === 'timeout') {
+                b.configTimeout = {
+                    minutos: parseInt(document.getElementById('timeoutMinutos').value) || 5,
+                    mensagem: document.getElementById('timeoutMensagem').value
+                };
+            }
+
+            fecharModalConfiguracao();
+            renderizarCanvas();
+        }
+
+        // --- SIMULADOR DE ATENDIMENTO ---
+        function toggleTestador() {
+            const modal = document.getElementById('test-modal');
+            if(modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'flex';
+                if(document.getElementById('test-messages').innerHTML === '') {
+                    adicionarMsgChat('bot', 'Olá! Seja bem-vindo ao atendimento automatizado.');
+                }
+            }
+        }
+
+        function limparChatTeste() {
+            document.getElementById('test-messages').innerHTML = '';
+            adicionarMsgChat('bot', 'Chat reiniciado. Olá!');
+        }
+
+        function adicionarMsgChat(remetente, texto) {
+            const containerMsgs = document.getElementById('test-messages');
+            const div = document.createElement('div');
+            div.className = `chat-msg ${remetente}`;
+            div.innerText = texto;
+            containerMsgs.appendChild(div);
+            containerMsgs.scrollTop = containerMsgs.scrollHeight;
+        }
+
+        function enviarTeste() {
+            const input = document.getElementById('testInput');
+            const texto = input.value.trim();
+            if(!texto) return;
+
+            adicionarMsgChat('user', texto);
+            input.value = '';
+
+            setTimeout(() => {
+                adicionarMsgChat('bot', 'Recebi sua mensagem: "' + texto + '". Como posso ajudar?');
+            }, 600);
+        }
+
+        function salvarFluxoNoServidor() {
+            alert("✅ Fluxo salvo com sucesso!");
+        }
+
+        // Inicialização
+        window.onload = function() {
+            renderizarCanais();
+            renderizarCanvas();
+        };
+        window.onload = function() {
+            renderizarCanais();
+            renderizarCanvas();
+        };
+
+        // Função de suporte para o bloco de Áudio
+        function toggleAudioVoice(isChecked) {
+            console.log("Modo Gravação de Voz alterado:", isChecked);
+        }
+        
+    function carregarAudioLocal(event, blocoId) {
+        const file = event.target.files[0];
+        if (file) {
+            const bloco = blocosCanvas.find(b => b.id === blocoId);
+            if (bloco) {
+                bloco.audioUrl = URL.createObjectURL(file);
+                bloco.audioFile = file;
+                renderizarCanvas();
+            }
+        }
+    }
+    
+    function removerAudio(blocoId) {
+    const bloco = blocosCanvas.find(b => b.id === blocoId);
+    if (bloco) {
+        bloco.audioUrl = null;
+        bloco.audioFile = null;
+        renderizarCanvas();
+    }
+}
+
+    function iniciarGravacaoAudio(blocoId) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                const mediaRecorder = new MediaRecorder(stream);
+                let audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const bloco = blocosCanvas.find(b => b.id === blocoId);
+                    if (bloco) {
+                        bloco.audioUrl = URL.createObjectURL(audioBlob);
+                        bloco.audioFile = audioBlob;
+                        renderizarCanvas();
+                    }
+                };
+
+                mediaRecorder.start();
+                alert("Gravando áudio... Clique OK para parar e salvar a gravação.");
+                
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                }, 5000);
+            })
+            .catch(error => {
+                alert("Erro ao acessar o microfone. Verifique as permissões do navegador.");
+                console.error(error);
+            });
+    }
+    </script>
+</body>
+</html>

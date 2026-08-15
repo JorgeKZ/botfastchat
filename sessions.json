@@ -1,0 +1,134 @@
+{
+  "web_user_870": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_535": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_990": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_78": {
+    "currentNodeId": "node-checa-nome",
+    "variables": {
+      "nome": "Olá"
+    }
+  },
+  "web_user_185": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_971": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_573": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_170": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_933": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_471": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_770": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_20": {
+    "currentNodeId": "node-checa-nome",
+    "variables": {
+      "nome": "Olá"
+    }
+  },
+  "web_user_8": {
+    "currentNodeId": "node-checa-nome",
+    "variables": {
+      "nome": "olá"
+    }
+  },
+  "web_user_708": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_924": {
+    "currentNodeId": "node-checa-nome",
+    "variables": {
+      "nome": "olá"
+    }
+  },
+  "web_user_157": {
+    "currentNodeId": "node-checa-nome",
+    "variables": {
+      "nome": "Olá"
+    }
+  },
+  "web_user_465": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_869": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_329": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_61": {
+    "currentNodeId": "node-pergunta-nome",
+    "variables": {}
+  },
+  "web_user_945": {
+    "currentNodeId": "node-menu-principal",
+    "variables": {
+      "nome": "Jorge"
+    }
+  },
+  "web_user_406": {
+    "currentNodeId": null,
+    "variables": {
+      "titulo_tarefa": "delectus aut autem"
+    }
+  },
+  "web_user_860": {
+    "currentNodeId": null,
+    "variables": {
+      "titulo_tarefa": "delectus aut autem"
+    }
+  },
+  "usuario_l3xew": {
+    "currentNodeId": null,
+    "variables": {
+      "nome_cliente": ""
+    }
+  },
+  "usuario_anzj5g": {
+    "currentNodeId": null,
+    "variables": {
+      "nome_cliente": "jorge"
+    }
+  },
+  "usuario_i9wu1f": {
+    "currentNodeId": null,
+    "variables": {
+      "nome_cliente": "Olá"
+    }
+  },
+  "usuario_thgope": {
+    "currentNodeId": null,
+    "variables": {
+      "nome_cliente": "Jorge"
+    }
+  }
+}

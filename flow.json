@@ -1,0 +1,320 @@
+{
+  "nodes": [
+    {
+      "id": "inicio_1",
+      "type": "Início",
+      "title": "Início",
+      "content": "Ponto de partida do fluxo do bot",
+      "x": 100,
+      "y": 100,
+      "isInicio": true
+    },
+    {
+      "id": "node_xgeyqd",
+      "type": "Mensagem",
+      "title": "Mensagem",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": true,
+      "variations": [
+        "Variação 1",
+        "Variação 2"
+      ],
+      "salvarContato": true,
+      "perguntaTexto": "Qual a sua pergunta?",
+      "variavel": "resposta",
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [],
+      "x": 773.1529213823176,
+      "y": 113.53877258888654,
+      "isInicio": false
+    },
+    {
+      "id": "node_48v4ur",
+      "type": "Menu",
+      "title": "Menu",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [
+        {
+          "id": "opt_ddsig",
+          "text": "Opção 1"
+        },
+        {
+          "id": "opt_rbzr5m",
+          "text": "Opção 2"
+        }
+      ],
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 791.5307587063114,
+      "y": 499.2599350596004,
+      "isInicio": false
+    },
+    {
+      "id": "node_lfgdwh",
+      "type": "Perguntas",
+      "title": "Perguntas",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [
+        {
+          "id": "p_ilribg",
+          "texto": "Qual o seu nome?",
+          "variavel": "nome"
+        }
+      ],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [],
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 1243.3788250963514,
+      "y": 506.54594951893273,
+      "isInicio": false
+    },
+    {
+      "id": "node_mebw2d",
+      "type": "Agente IA",
+      "title": "Agente IA",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [],
+      "tempoEsperaValor": 10,
+      "tempoEsperaUnidade": "Segundos",
+      "configAgente": {
+        "provider": "OpenAI (GPT-4o)",
+        "nomeAgente": "Atendente Virtual",
+        "tipoAgente": "Assistente Geral",
+        "descricao": "Agente inteligente para suporte e atendimento inicial."
+      },
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 1265.9802286127883,
+      "y": 1070.7464627866477,
+      "isInicio": false
+    },
+    {
+      "id": "node_qkyua8",
+      "type": "Anotações",
+      "title": "Anotações",
+      "content": "Clique para adicionar anotações...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [],
+      "tempoEsperaValor": 10,
+      "tempoEsperaUnidade": "Segundos",
+      "configAgente": {
+        "provider": "OpenAI (GPT-4o)",
+        "nomeAgente": "Atendente Virtual",
+        "tipoAgente": "Assistente Geral",
+        "descricao": "Agente inteligente para suporte e atendimento inicial."
+      },
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 1230.336140205706,
+      "y": 272.90066821330834,
+      "isInicio": false
+    },
+    {
+      "id": "node_opcoes",
+      "type": "Condicional (IF)",
+      "title": "Condicional (IF)",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [
+        {
+          "id": "cond_56jdni",
+          "title": "Condição 1",
+          "operator": "Igual a",
+          "compareValue": "Valor para comparação",
+          "valuesForComp": "Valores para comparação"
+        }
+      ],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [],
+      "tempoEsperaValor": 10,
+      "tempoEsperaUnidade": "Segundos",
+      "configAgente": {
+        "provider": "OpenAI (GPT-4o)",
+        "nomeAgente": "Atendente Virtual",
+        "tipoAgente": "Assistente Geral",
+        "descricao": "Agente inteligente para suporte e atendimento inicial."
+      },
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 1692.836140205706,
+      "y": 512.9006682133083,
+      "isInicio": false
+    },
+    {
+      "id": "node_ejgwld",
+      "type": "Switch (Múltiplas Condições)",
+      "title": "Switch (Múltiplas Condições)",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [
+        {
+          "id": "cond_36sbfe",
+          "title": "Condição 1",
+          "operator": "Igual a",
+          "compareValue": "Valor para comparação",
+          "valuesForComp": "Valores para comparação"
+        }
+      ],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [],
+      "tempoEsperaValor": 10,
+      "tempoEsperaUnidade": "Segundos",
+      "configAgente": {
+        "provider": "OpenAI (GPT-4o)",
+        "nomeAgente": "Atendente Virtual",
+        "tipoAgente": "Assistente Geral",
+        "descricao": "Agente inteligente para suporte e atendimento inicial."
+      },
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 2115.336140205706,
+      "y": 515.4006682133083,
+      "isInicio": false
+    },
+    {
+      "id": "node_uyulsa",
+      "type": "Tempo de Espera",
+      "title": "Tempo de Espera",
+      "content": "Digite sua mensagem...",
+      "variationsEnabled": false,
+      "variations": [
+        "Variação 1"
+      ],
+      "salvarContato": true,
+      "perguntasLista": [],
+      "palavrasSair": "Ex: sair, cancelar, parar",
+      "logicType": "AND",
+      "conditions": [],
+      "enunciadoMenu": "Qual a pergunta do menu?",
+      "variavelMenu": "opcao_selecionada",
+      "mostrarNumeros": true,
+      "opcoesMenu": [],
+      "tempoEsperaValor": 10,
+      "tempoEsperaUnidade": "Segundos",
+      "configAgente": {
+        "provider": "OpenAI (GPT-4o)",
+        "nomeAgente": "Atendente Virtual",
+        "tipoAgente": "Assistente Geral",
+        "descricao": "Agente inteligente para suporte e atendimento inicial."
+      },
+      "configNenhuma": {
+        "tentativas": 3,
+        "mensagem": "Opção inválida. Tente novamente."
+      },
+      "configTimeout": {
+        "minutos": 5,
+        "mensagem": "Tempo esgotado por inatividade."
+      },
+      "x": 795.336140205706,
+      "y": 1072.9006682133083,
+      "isInicio": false
+    }
+  ],
+  "conexoes": [
+    {
+      "from": "inicio_1",
+      "to": "node_xgeyqd"
+    }
+  ]
+}

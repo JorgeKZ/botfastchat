@@ -2,27 +2,51 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - BotFastChat</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; }
-        h2 { text-align: center; color: #333; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #0056b3; }
-        .error { color: red; font-size: 14px; text-align: center; }
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; margin-bottom: 20px; color: #333; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .password-container { position: relative; width: 100%; margin: 8px 0; }
+        .password-container input { width: 100%; padding: 12px; padding-right: 40px; margin: 0; box-sizing: border-box; }
+        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; font-size: 16px; user-select: none; }
+        button.btn-submit { width: 100%; padding: 12px; background: #007bff; border: none; color: white; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        button.btn-submit:hover { background: #0056b3; }
+        .error { color: red; text-align: center; margin-top: 10px; font-size: 14px; }
+        .link { text-align: center; margin-top: 15px; font-size: 14px; }
+        .link a { color: #007bff; text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Entrar</h2>
+        <input type="email" id="email" placeholder="E-mail" required>
+        <div class="password-container">
+            <input type="password" id="senha" placeholder="Senha" required>
+            <span class="toggle-password" id="eyeIcon" onclick="toggleSenha()">👁️</span>
+        </div>
+        <button class="btn-submit" onclick="fazerLogin()">Entrar</button>
         <div id="error" class="error"></div>
-        <input type="email" id="email" placeholder="E-mail">
-        <input type="password" id="senha" placeholder="Senha">
-        <button onclick="fazerLogin()">Entrar</button>
+        <div class="link">
+            Não tem uma conta? <a href="register.html">Cadastre-se</a>
+        </div>
     </div>
 
     <script>
+        function toggleSenha() {
+            const senhaInput = document.getElementById('senha');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (senhaInput.type === 'password') {
+                senhaInput.type = 'text';
+                eyeIcon.innerText = '🙈';
+            } else {
+                senhaInput.type = 'password';
+                eyeIcon.innerText = '👁️';
+            }
+        }
+
         async function fazerLogin() {
             const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
@@ -39,8 +63,7 @@
 
                 if (resposta.ok) {
                     localStorage.setItem('token', dados.token);
-                    alert('Bem-vindo, ' + dados.nome + '!');
-                    window.location.href = '/index.html'; // Redireciona para o painel principal do bot
+                    window.location.href = '/index.html'; 
                 } else {
                     errorDiv.innerText = dados.error || 'Erro ao fazer login';
                 }

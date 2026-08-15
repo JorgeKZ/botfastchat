@@ -2,6 +2,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script>
+    if (!localStorage.getItem('token')) {
+        window.location.href = 'login.html';
+    }
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BotFast - Construtor de Fluxo Pro</title>
@@ -299,7 +305,9 @@
                     <h1>Olá, tudo bem?</h1>
                     <p style="color: #64748b; font-size: 0.9rem;" id="qtd-canais">Canais na sua conta</p>
                 </div>
-                <button class="btn-novo-canal" onclick="abrirModalCanal()">+ Novo canal</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn-novo-canal" onclick="abrirModalCanal()">+ Novo canal</button>
+            <button onclick="localStorage.removeItem('token'); window.location.href='login.html';" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sair</button>
             </div>
             <div class="cards-grid" id="lista-canais"></div>
         </div>

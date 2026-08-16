@@ -298,6 +298,7 @@
             <h2>BotFast</h2>
             <div class="sidebar-menu-item active">💬 Todos os canais</div>
             <div class="sidebar-menu-item">⚙️ Configurações</div>
+            <a href="#" onclick="fazerLogout()" style="color: #ef4444; margin-top: auto; padding: 10px;">🚪 Sair</a>
         </div>
         <div class="dash-content">
     <!-- Cabeçalho com saudação à esquerda e botão à direita -->
@@ -552,7 +553,7 @@
             const grid = document.getElementById('lista-canais');
             if (!grid) return;
             let html = `
-                <div class="channel-card" style="border: 2px dashed #cbd5e1; background: #f8fafc; align-items: center; justify-content: center;" onclick="abrirModalCanal()">
+                <div class="channel-card" onclick="abrirModalCanal()" style="border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer;">
                     <div style="text-align: center; color: #10b981; font-weight: bold;">
                         <span style="font-size: 1.5rem;">+</span><br>Conectar outro canal
                     </div>
@@ -2119,10 +2120,6 @@
             renderizarCanais();
             renderizarCanvas();
         };
-        window.onload = function() {
-            renderizarCanais();
-            renderizarCanvas();
-        };
 
         // Função de suporte para o bloco de Áudio
         function toggleAudioVoice(isChecked) {
@@ -2183,6 +2180,10 @@
                 console.error(error);
             });
     }
+function fazerLogout() {
+    localStorage.removeItem('usuarioLogado');
+    window.location.href = 'login.html';
+}
     </script>
 </body>
 </html>

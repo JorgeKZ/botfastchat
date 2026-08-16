@@ -2159,15 +2159,13 @@
         renderizarCanvas();
     }
 
-    // Reatribui o evento de clique do botão "+ Novo canal" caso ele exista na tela
+  // Reatribui o evento de clique do botão "+ Novo canal" caso ele exista na tela
     const btnNovoCanal = document.getElementById('btn-novo-canal') || document.querySelector('.btn-novo-canal');
     if (btnNovoCanal) {
         btnNovoCanal.onclick = function() {
-            // Ajuste aqui a função que abre a tela de fluxo/configuração de canal
             if (typeof abrirNovoCanal === 'function') {
                 abrirNovoCanal();
             } else {
-                // Exemplo padrão caso a função mude de nome: alternar para a aba do editor/fluxo
                 const editorView = document.getElementById('editor-view');
                 const listagemView = document.getElementById('lista-canais');
                 if (editorView && listagemView) {

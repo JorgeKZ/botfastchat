@@ -549,16 +549,41 @@
             }
         }
 
-        function renderizarCanais() {
-            const grid = document.getElementById('lista-canais');
-            if (!grid) return;
-            let html = `
-                <div class="channel-card" onclick="abrirModalCanal()" style="border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer;">
-                    <div style="text-align: center; color: #10b981; font-weight: bold;">
-                        <span style="font-size: 1.5rem;">+</span><br>Conectar outro canal
+    function renderizarCanais() {
+    const grid = document.getElementById('lista-canais');
+    if (!grid) return;
+
+    let canais = [];
+    try {
+        canais = JSON.parse(localStorage.getItem('canais')) || [];
+    } catch (e) {
+        canais = [];
+    }
+
+    let html = '';
+
+    canais.forEach((c, index) => {
+        html += `
+            <div class="channel-card" onclick="abrirEditorCanal('${c.nome}')">
+                <div class="channel-card-top">
+                    <div>
+                        <div class="channel-title">${c.nome}</div>
+                        <div class="channel-type">${c.tipo || 'WhatsApp'}</div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="channel-card" onclick="abrirModalCanal()" style="border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer;">
+            <div style="text-align: center; color: #10b981; font-weight: bold;">
+                <span style="font-size: 1.5rem;">+</span><br>Conectar outro canal
+            </div>
+        </div>
+    `;
+
+    grid.innerHTML = html;
             canais.forEach(c => {
                 html += `
                     <div class="channel-card" onclick="abrirEditorCanal('${c.nome}')">
@@ -2115,30 +2140,63 @@
             alert("✅ Fluxo salvo com sucesso!");
         }
 
-        // Inicialização
-        window.onload = function() {
-            renderizarCanais();
-            renderizarCanvas();
-        };
+       // Inicialização segura com verificação de login e renderização correta
+    window.onload = function() {
+    const usuarioLogado = localStorage.getItem('usuarioLogado');
+    
+    // Se houver tela de login obrigatória e não estiver logado, redireciona
+    // (Comente esta linha se a página inicial puder ser vista sem login)
+    // if (!usuarioLogado && window.location.pathname.includes('index.html')) {
+    //     window.location.href = 'login.html';
+    //     return;
+    // }
 
-        // Função de suporte para o bloco de Áudio
-        function toggleAudioVoice(isChecked) {
-            console.log("Modo Gravação de Voz alterado:", isChecked);
-        }
-        
-    function carregarAudioLocal(event, blocoId) {
-        const file = event.target.files[0];
-        if (file) {
-            const bloco = blocosCanvas.find(b => b.id === blocoId);
-            if (bloco) {
-                bloco.audioUrl = URL.createObjectURL(file);
-                bloco.audioFile = file;
-                renderizarCanvas();
+    // Renderiza os canais e o canvas normalmente
+    if (typeof renderizarCanais === 'function') {
+        renderizarCanais();
+    }
+    if (typeof renderizarCanvas === 'function') {
+        renderizarCanvas();
+    }
+
+    // Reatribui o evento de clique do botão "+ Novo canal" caso ele exista na tela
+    const btnNovoCanal = document.getElementById('btn-novo-canal') || document.querySelector('.btn-novo-canal');
+    if (btnNovoCanal) {
+        btnNovoCanal.onclick = function() {
+            // Ajuste aqui a função que abre a tela de fluxo/configuração de canal
+            if (typeof abrirNovoCanal === 'function') {
+                abrirNovoCanal();
+            } else {
+                // Exemplo padrão caso a função mude de nome: alternar para a aba do editor/fluxo
+                const editorView = document.getElementById('editor-view');
+                const listagemView = document.getElementById('lista-canais');
+                if (editorView && listagemView) {
+                    listagemView.style.display = 'none';
+                    editorView.style.display = 'block';
+                }
             }
+        };
+    }
+};
+
+// Função de suporte para o bloco de Áudio
+function toggleAudioVoice(isChecked) {
+    console.log("Modo Gravação de Voz alterado:", isChecked);
+}
+
+function carregarAudioLocal(event, blocoId) {
+    const file = event.target.files[0];
+    if (file) {
+        const bloco = blocosCanvas.find(b => b.id === blocoId);
+        if (bloco) {
+            bloco.audioUrl = URL.createObjectURL(file);
+            bloco.audioFile = file;
+            renderizarCanvas();
         }
     }
-    
-    function removerAudio(blocoId) {
+}
+
+function removerAudio(blocoId) {
     const bloco = blocosCanvas.find(b => b.id === blocoId);
     if (bloco) {
         bloco.audioUrl = null;
@@ -2147,39 +2205,40 @@
     }
 }
 
-    function iniciarGravacaoAudio(blocoId) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                let audioChunks = [];
+function iniciarGravacaoAudio(blocoId) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            const mediaRecorder = new MediaRecorder(stream);
+            let audioChunks = [];
 
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
 
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const bloco = blocosCanvas.find(b => b.id === blocoId);
-                    if (bloco) {
-                        bloco.audioUrl = URL.createObjectURL(audioBlob);
-                        bloco.audioFile = audioBlob;
-                        renderizarCanvas();
-                    }
-                };
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const bloco = blocosCanvas.find(b => b.id === blocoId);
+                if (bloco) {
+                    bloco.audioUrl = URL.createObjectURL(audioBlob);
+                    bloco.audioFile = audioBlob;
+                    renderizarCanvas();
+                }
+            };
 
-                mediaRecorder.start();
-                alert("Gravando áudio... Clique OK para parar e salvar a gravação.");
-                
-                setTimeout(() => {
-                    mediaRecorder.stop();
-                    stream.getTracks().forEach(track => track.stop());
-                }, 5000);
-            })
-            .catch(error => {
-                alert("Erro ao acessar o microfone. Verifique as permissões do navegador.");
-                console.error(error);
-            });
-    }
+            mediaRecorder.start();
+            alert("Gravando áudio... Clique OK para parar e salvar a gravação.");
+            
+            setTimeout(() => {
+                mediaRecorder.stop();
+                stream.getTracks().forEach(track => track.stop());
+            }, 5000);
+        })
+        .catch(error => {
+            alert("Erro ao acessar o microfone. Verifique as permissões do navegador.");
+            console.error(error);
+        });
+}
+
 function fazerLogout() {
     localStorage.removeItem('usuarioLogado');
     window.location.href = 'login.html';

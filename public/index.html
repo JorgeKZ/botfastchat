@@ -2165,23 +2165,23 @@
         renderizarCanvas();
     }
 
-  // Reatribui o evento de clique do botão "+ Novo canal" caso ele exista na tela
-    const btnNovoCanal = document.getElementById('btn-novo-canal') || document.querySelector('.btn-novo-canal');
-    if (btnNovoCanal) {
-        btnNovoCanal.onclick = function() {
-            if (typeof abrirNovoCanal === 'function') {
-                abrirNovoCanal();
-            } else {
-                const editorView = document.getElementById('editor-view');
-                const listagemView = document.getElementById('lista-canais');
-                if (editorView && listagemView) {
-                    listagemView.style.display = 'none';
-                    editorView.style.display = 'block';
+    // Reatribui o evento de clique do botão "+ Novo canal" caso ele exista na tela
+        const btnNovoCanal = document.getElementById('btn-novo-canal') || document.querySelector('.btn-novo-canal');
+        if (btnNovoCanal) {
+            btnNovoCanal.onclick = function() {
+                if (typeof abrirNovoCanal === 'function') {
+                    abrirNovoCanal();
+                } else {
+                    const editorView = document.getElementById('editor-view');
+                    const listagemView = document.getElementById('lista-canais');
+                    if (editorView && listagemView) {
+                        listagemView.style.display = 'none';
+                        editorView.style.display = 'block';
+                    }
                 }
-            }
-        };
-    }
-};
+            };
+        }
+    };
 
 // Função de suporte para o bloco de Áudio
 function toggleAudioVoice(isChecked) {

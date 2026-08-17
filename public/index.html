@@ -603,8 +603,14 @@
             if (contador) contador.innerText = `${canais.length} canais na sua conta`;
         }
 
-        function abrirModalCanal() { document.getElementById('modal-overlay').style.display = 'flex'; }
-        function fecharModalCanal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        function abrirModalCanal() {
+        const modal = document.getElementById('modal-overlay');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+    
+    function fecharModalCanal() { document.getElementById('modal-overlay').style.display = 'none'; }
         
         function selecionarNicho(el, nicho) {
             document.querySelectorAll('.nicho-card').forEach(c => c.classList.remove('selected'));

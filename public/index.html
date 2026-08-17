@@ -2243,4 +2243,19 @@ function fazerLogout() {
 }
     </script>
 </body>
+
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnNovoCanal = document.getElementById('btn-novo-canal') || document.querySelector('.btn-novo-canal');
+        if (btnNovoCanal) {
+            btnNovoCanal.addEventListener('click', () => {
+                const modalOverlay = document.getElementById('modal-overlay');
+                if (modalOverlay) {
+                    modalOverlay.style.display = 'flex';
+                }
+            });
+        }
+    });
+</script>
 </html>

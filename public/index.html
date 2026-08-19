@@ -27,8 +27,11 @@
         
         .dash-content { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; }
         .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; width: 100%; }
-        .btn-novo-canal { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .dash-header h1 { font-size: 1.8rem; font-weight: bold; color: #1e293b; margin: 0; }
+        .btn-novo-canal { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
         .btn-novo-canal:hover { background: #059669; }
+        .btn-sair { background-color: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-sair:hover { background-color: #dc2626; }
 
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; }
         .channel-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; justify-content: space-between; height: 160px; }
@@ -301,14 +304,15 @@
         </div>
         <div class="dash-content">
             <div class="dash-header">
-                <div>
-                    <h1>Olá, tudo bem?</h1>
-                    <p style="color: #64748b; font-size: 0.9rem;" id="qtd-canais">Canais na sua conta</p>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+        <div>
+            <h1>Olá, tudo bem?</h1>
+            <p style="color: #64748b; font-size: 0.9rem;" id="qtd-canais">Canais na sua conta</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
             <button class="btn-novo-canal" onclick="abrirModalCanal()">+ Novo canal</button>
-            <button onclick="localStorage.removeItem('token'); window.location.href='login.html';" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sair</button>
-            </div>
+            <button onclick="localStorage.removeItem('token'); window.location.href='login.html';" style="background: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer;">Sair</button>
+        </div>
+    </div>
             <div class="cards-grid" id="lista-canais"></div>
         </div>
     </div>

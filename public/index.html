@@ -2,7 +2,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-       
+   
+    <script>
+    // Se não houver userId salvo no navegador, redireciona para o login
+    if (!localStorage.getItem('userId')) {
+        window.location.href = '/login.html';
+    }
+</script> 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BotFast - Construtor de Fluxo Pro</title>
